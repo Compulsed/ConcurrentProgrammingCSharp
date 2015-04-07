@@ -4,7 +4,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProjectGuid>{A0937808-2A50-4F81-B088-8CF7EA2543D8}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <RootNamespace>DSalter.ConcurrentUtils</RootNamespace>
     <AssemblyName>DSalter.ConcurrentUtils</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
