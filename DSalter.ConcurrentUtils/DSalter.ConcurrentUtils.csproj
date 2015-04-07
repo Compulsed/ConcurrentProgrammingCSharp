@@ -3,10 +3,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
-    <ProjectGuid>{8EFE3BB9-6064-4E0C-8254-1E8C88DDE8D3}</ProjectGuid>
+    <ProjectGuid>{A0937808-2A50-4F81-B088-8CF7EA2543D8}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>ConcurrentProgrammingCSharp</RootNamespace>
-    <AssemblyName>ConcurrentProgrammingCSharp</AssemblyName>
+    <RootNamespace>DSalter.ConcurrentUtils</RootNamespace>
+    <AssemblyName>DSalter.ConcurrentUtils</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -34,11 +34,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ActiveObject.cs" />
+    <Compile Include="Barrier.cs" />
+    <Compile Include="BoundedChannel.cs" />
+    <Compile Include="Channel.cs" />
+    <Compile Include="FIFOSemaphore.cs" />
+    <Compile Include="Latch.cs" />
+    <Compile Include="LightSwitch.cs" />
+    <Compile Include="Mutex.cs" />
+    <Compile Include="ReaderWriterLock.cs" />
+    <Compile Include="Rendezvous.cs" />
+    <Compile Include="Semaphore.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <ItemGroup>
-    <None Include="Account.cs" />
-    <None Include="Dining-Philosophers.cs" />
-    <None Include="MessageWriter.cs" />
-  </ItemGroup>
 </Project>

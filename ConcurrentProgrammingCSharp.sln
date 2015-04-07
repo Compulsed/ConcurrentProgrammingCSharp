@@ -3,15 +3,27 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcurrentProgrammingCSharp", "ConcurrentProgrammingCSharp\ConcurrentProgrammingCSharp.csproj", "{8EFE3BB9-6064-4E0C-8254-1E8C88DDE8D3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSalter.ConcurrentUtils", "DSalter.ConcurrentUtils\DSalter.ConcurrentUtils.csproj", "{A0937808-2A50-4F81-B088-8CF7EA2543D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSalter.Submissions", "DSalter.Submissions\DSalter.Submissions.csproj", "{4FA2C855-0B51-4C92-A0C2-40B104BD0997}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4FA2C855-0B51-4C92-A0C2-40B104BD0997}.Debug|x86.ActiveCfg = Debug|x86
+		{4FA2C855-0B51-4C92-A0C2-40B104BD0997}.Debug|x86.Build.0 = Debug|x86
+		{4FA2C855-0B51-4C92-A0C2-40B104BD0997}.Release|x86.ActiveCfg = Release|x86
+		{4FA2C855-0B51-4C92-A0C2-40B104BD0997}.Release|x86.Build.0 = Release|x86
 		{8EFE3BB9-6064-4E0C-8254-1E8C88DDE8D3}.Debug|x86.ActiveCfg = Debug|x86
 		{8EFE3BB9-6064-4E0C-8254-1E8C88DDE8D3}.Debug|x86.Build.0 = Debug|x86
 		{8EFE3BB9-6064-4E0C-8254-1E8C88DDE8D3}.Release|x86.ActiveCfg = Release|x86
 		{8EFE3BB9-6064-4E0C-8254-1E8C88DDE8D3}.Release|x86.Build.0 = Release|x86
+		{A0937808-2A50-4F81-B088-8CF7EA2543D8}.Debug|x86.ActiveCfg = Debug|x86
+		{A0937808-2A50-4F81-B088-8CF7EA2543D8}.Debug|x86.Build.0 = Debug|x86
+		{A0937808-2A50-4F81-B088-8CF7EA2543D8}.Release|x86.ActiveCfg = Release|x86
+		{A0937808-2A50-4F81-B088-8CF7EA2543D8}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 EndGlobal
