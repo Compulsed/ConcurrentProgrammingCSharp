@@ -34,9 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="14-ChannelTest.cs" />
-    <Compile Include="0-Playground.cs" />
-    <Compile Include="00-SharedPlaygound.cs" />
+    <Compile Include="16-ConnectionManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -52,6 +50,10 @@
     <None Include="12-LightSwitchTest.cs" />
     <None Include="2-ActiveObject.cs" />
     <None Include="13-FIFOSemaphoreTest.cs" />
+    <None Include="0-Playground.cs" />
+    <None Include="00-SharedPlaygound.cs" />
+    <None Include="14-ChannelTest.cs" />
+    <None Include="15-ChannelActiveObjectTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DSalter.ConcurrentUtils\DSalter.ConcurrentUtils.csproj">

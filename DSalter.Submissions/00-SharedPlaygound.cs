@@ -6,6 +6,7 @@ namespace DSalter.Submissions
 	{
 		public _0_SharedPlaygound ()
 		{
+
 		}
 	}
 }
