@@ -36,9 +36,4 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <ItemGroup>
-    <None Include="Account.cs" />
-    <None Include="Dining-Philosophers.cs" />
-    <None Include="MessageWriter.cs" />
-  </ItemGroup>
 </Project>
