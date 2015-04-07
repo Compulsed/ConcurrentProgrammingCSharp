@@ -35,6 +35,8 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="14-ChannelTest.cs" />
+    <Compile Include="0-Playground.cs" />
+    <Compile Include="00-SharedPlaygound.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
