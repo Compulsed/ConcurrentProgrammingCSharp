@@ -65,11 +65,11 @@ namespace DSalter.Submissions
 
 					// 1 Thread will be running this at the same time
 					Console.WriteLine("#" + this.ToString() + "\t Oxygen now waiting at the barrier");
-					_combinationBarrier.Arrive ();
-					Console.WriteLine ("#" + this.ToString() + "\t Oxygen has now passed the barrier");
+					if (_combinationBarrier.Arrive ()) {
+						Console.WriteLine ("\n");
+					}
 
 					_combinationBarrier = new Barrier (3);
-					Console.WriteLine ("\n");
 					// 1 Thread will be running this at the same time
 
 
@@ -114,11 +114,12 @@ namespace DSalter.Submissions
 
 					// 2 Threads will be running this at the same time
 					Console.WriteLine ("#" + this.ToString() + "\tHydrogen now waiting at the barrier");
-					_combinationBarrier.Arrive ();
-					Console.WriteLine ("#" + this.ToString() + "\tHydrogen has now passed the barrier");
-					// 2 Threads will be runnning this at the same time
+					if (_combinationBarrier.Arrive ()) {
+						Console.WriteLine ("\n");
+					}
 
 
+					Thread.Sleep (5000);
 				}
 			}
 		}
@@ -126,12 +127,13 @@ namespace DSalter.Submissions
 		public static void Main()
 		{
 
-			for (UInt64 i = 0; i < 1; ++i) {
+			for (UInt64 i = 0; i < 2; ++i) {
 				new Oxygen (i).Start ();
 			}
 
-			for (UInt64 i = 0; i < 2; ++i) {
+			for (UInt64 i = 0; i < 4; ++i) {
 				new Hydrogen (i).Start ();
+				Thread.Sleep (1000);
 			}
 
 			return;

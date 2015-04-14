@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -46,8 +46,8 @@
     <Compile Include="Rendezvous.cs" />
     <Compile Include="Semaphore.cs" />
     <Compile Include="ChannelActiveObject.cs" />
-    <Compile Include="MessageEchoer.cs" />
     <Compile Include="ConnectionManager.cs" />
+    <Compile Include="MessageEchoer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
