@@ -19,7 +19,7 @@ namespace DSalter.ConcurrentUtils
 		/// </summary>
 		protected abstract void Run();
 
-		public ActiveObject() : this("No name given to active object thread"){}
+		public ActiveObject() : this("X"){}
 
 		/// <summary>
 		/// Takes a name that can be given to the execution thread
