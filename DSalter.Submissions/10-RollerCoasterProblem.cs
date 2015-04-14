@@ -32,11 +32,11 @@ namespace DSalter.Submissions
 		public static UInt64 boarders = 0;
 		public static UInt64 unboarders = 0;
 
-		public static Mutex mutex = new Mutex(); // Protects passegners which counts the number counts the number of passengers
+		public static Mutex entryTurnstile = new Mutex(); // Protects passegners which counts the number counts the number of passengers
 		// that have invoked boardCar
-		public static Mutex mutex2 = new Mutex();
+		public static Mutex exitTurnstil = new Mutex();
 
-		public static Semaphore boardQueue = new Semaphore (0);	// Wait on this before boarding
+		public static Semaphore boardQueue = new Semaphore (0);		// Wait on this before boarding
 		public static Semaphore unboardQueue = new Semaphore(0);	// Wait on this before unboarding
 
 		public static Semaphore allAboard = new Semaphore(0); // Car is full
@@ -46,55 +46,55 @@ namespace DSalter.Submissions
 		// board and unboard
 		public class Passenger : ActiveObject
 		{
-			public Car boardingCar;
-
-			public Passenger(){}
+			public Passenger(UInt64 personNo) : base(Convert.ToString(personNo)){}
 
 			// Attempt to Enter the car
 			public void BoardCar()
 			{
-				Console.WriteLine ("Boarding car");
+				Console.WriteLine (this.ToString() + " - Boarding car");
 			}
 
 			// Attempt to Exit the car
 			public void UnboardCar()
 			{
-				Console.WriteLine ("Unboarding car");
+				Console.WriteLine (this.ToString() + " - Unboarding car");
 			}
 
 			protected override void Run ()
 			{
-				Console.WriteLine ("Inside Passenger");
+				Console.WriteLine ("Inside Passenger " + this.ToString());
 
 				while (true) {
-					boardQueue.Acquire ();
-					BoardCar ();
+					
+					boardQueue.Acquire ();				// (<-- Car) Signals we can start to enter the ride
 
-					mutex.Acquire ();
-					{
+					BoardCar (); // #2
+
+					using (entryTurnstile.Lock ()) {
 						++boarders;
 						if (boarders == capacity) {
-							allAboard.Release ();
+							allAboard.Release ();		// (--> Car) Signal we are ready to leave
 							boarders = 0;
 						}
 					}
-					mutex.Release ();
 
-					unboardQueue.Acquire ();
-					UnboardCar ();
+					unboardQueue.Acquire (); 			// (<-- Car) Signals ride is over
 
-					mutex2.Acquire ();
-					{
+
+					UnboardCar ();	// #4
+
+					using(exitTurnstil.Lock()){
 						++unboarders;
 						if (unboarders == capacity) {
-							allAshore.Release ();
+							allAshore.Release ();		// (--> Car) Signal everyone is off
 							unboarders = 0;
 						}
 					}
-					mutex2.Release ();
 
+			
 				}
 			}
+
 		}
 
 		// load, run, unload
@@ -106,19 +106,21 @@ namespace DSalter.Submissions
 			// Invoke to allow people to enter car
 			public void Load()
 			{
-				Console.WriteLine ("Loading");
+				Console.WriteLine ("Car has started Loading");
 			}
 
 			// Like the run method
 			public void Depart()
 			{
 				Console.WriteLine ("DEPARTING!!!");
+				Thread.Sleep (3000);
+				Console.WriteLine ("FINISHED, we have ARRIVED!!!");
 			}
 
 			// Ivoke to allow people to exit the car
 			public void Unload()
 			{
-				Console.WriteLine ("Unloading");
+				Console.WriteLine ("Car has started Unloading");
 			}
 
 
@@ -126,15 +128,27 @@ namespace DSalter.Submissions
 			protected override void Run()
 			{
 				while (true) {
-					Load ();
-					boardQueue.Release (capacity);	// Allows capacity out of car 
-					allAboard.Acquire ();
+					Load (); // #1
+					Thread.Sleep (1000);
 
-					Depart ();
+					boardQueue.Release (capacity);	// (--> Passenger) to get on the car
+					Thread.Sleep(1000);
 
-					Unload ();
-					allAboard.Release (capacity);	// Allows capacity out of car 
-					allAshore.Acquire ();
+					allAboard.Acquire ();			// (<-- Passenger) everyone is ready!
+					Thread.Sleep (1000);
+
+					Depart (); // #3
+					Thread.Sleep (1000);
+
+					Unload (); // #4
+					Thread.Sleep(1000);
+
+
+					unboardQueue.Release (5); 		// (--> Passenger) to get off the car
+
+
+					allAshore.Acquire (); 		 	// (<-- Passenger) everyone is off the car
+					Thread.Sleep(1000);
 				}
 			}
 		}
@@ -145,11 +159,11 @@ namespace DSalter.Submissions
 
 			Car carOne = new Car ();
 			Passenger[] people = new Passenger[]{
-				new Passenger(),
-				new Passenger(),
-				new Passenger(),
-				new Passenger(),
-				new Passenger()
+				new Passenger(1),
+				new Passenger(2),
+				new Passenger(3),
+				new Passenger(4),
+				new Passenger(5)
 			};
 
 			carOne.Start ();

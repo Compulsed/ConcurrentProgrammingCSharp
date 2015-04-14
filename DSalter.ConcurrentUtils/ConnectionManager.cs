@@ -11,7 +11,6 @@ using System.Text;
 
 namespace DSalter.ConcurrentUtils
 {
-
 	public class ConnectionManager : ActiveObject
 	{
 		Socket _mainSocket;
@@ -31,7 +30,6 @@ namespace DSalter.ConcurrentUtils
 				SocketType.Stream, ProtocolType.Tcp);
 
 			_iep = new IPEndPoint (IPAddress.Any, mainPort);
-
 
 			_mainSocket.Bind (_iep);
 			_mainSocket.Listen (maxConnectionQueue);
@@ -53,7 +51,8 @@ namespace DSalter.ConcurrentUtils
 
 				Socket.Select (socketListCopy, null, null, -1);
 
-				// if the returned socket if the main one
+				// if the returned socket is the one listening for connections
+				// We now need to process the new connection, and then remove it
 				if (socketListCopy [0] == _mainSocket) {
 					Socket client = socketListCopy [0].Accept ();
 					_socketList.Add (client);

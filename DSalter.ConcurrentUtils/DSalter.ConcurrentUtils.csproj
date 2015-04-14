@@ -45,9 +45,9 @@
     <Compile Include="ReaderWriterLock.cs" />
     <Compile Include="Rendezvous.cs" />
     <Compile Include="Semaphore.cs" />
-    <Compile Include="ConnectionManager.cs" />
     <Compile Include="ChannelActiveObject.cs" />
     <Compile Include="MessageEchoer.cs" />
+    <Compile Include="ConnectionManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
