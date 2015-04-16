@@ -35,6 +35,9 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="16-ConnectionManager.cs" />
+    <Compile Include="17-ParallelProgram.cs">
+      <DependentUpon>16-ConnectionManager.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
