@@ -5,10 +5,9 @@ using Thread = System.Threading.Thread;
 
 namespace DSalter.Submissions
 {
-	public class _2_LightSwitchTest
+	public class _2_ReaderWriterTest
 	{
-		public static Mutex writePermission = new Mutex();
-		public static LightSwitch LS = new LightSwitch(writePermission);
+		public static ReaderWriterLock RWL = new ReaderWriterLock();
 
 
 		public class ReaderThread : ActiveObject
@@ -18,15 +17,16 @@ namespace DSalter.Submissions
 			protected override void Run ()
 			{
 				while (true) {
-					LS.Acquire ();
 
-					Console.WriteLine("<| " + base.ToString() + " is reading");
-					Thread.Sleep (1000);
+					using (RWL.AcquireReaderLock ()) {
+						Console.WriteLine ("<| " + base.ToString () + " is reading");
+						Thread.Sleep (3000);
 
-					Console.WriteLine (" |>" + base.ToString() + " has finished reading!");
-					LS.Release ();
+						Console.WriteLine (" |>" + base.ToString () + " has finished reading!");
+					}
 
-					Thread.Sleep (10000);
+					// Thread.Sleep (1000);
+
 				}
 			}
 		}
@@ -38,14 +38,18 @@ namespace DSalter.Submissions
 			protected override void Run()
 			{
 				while (true) {
-					writePermission.Acquire ();
 
-					Console.WriteLine ("<< " + base.ToString() + " is writing");
-					Thread.Sleep (10000);
+					using(RWL.AcquireWriterLock()){
+						Console.WriteLine ("<< " + base.ToString () + " is writing");
 
-					Console.WriteLine (">> " + base.ToString() + " has finished writing");
-					writePermission.Release ();
-					Thread.Sleep (10000);
+						Thread.Sleep (3000);
+
+						Console.WriteLine (">> " + base.ToString () + " has finished writing");
+					}
+
+					// Thread.Sleep (1000);
+
+
 				}
 			}
 		}
@@ -54,7 +58,7 @@ namespace DSalter.Submissions
 		public static void TestOne()
 		{
 			ReaderThread[] readers = new ReaderThread[5];
-			WriterThread[] writers = new WriterThread[2];
+			WriterThread[] writers = new WriterThread[5];
 
 			for (int i = 0; i < readers.Length; ++i) {
 				readers [i] = new ReaderThread ("#" + i);
@@ -76,4 +80,3 @@ namespace DSalter.Submissions
 		}
 	}
 }
-

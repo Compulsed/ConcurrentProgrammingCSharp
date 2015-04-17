@@ -9,7 +9,7 @@ namespace DSalter.ConcurrentUtils
 	/// 
 	/// Author: Dale Salter 9724397
 	/// </summary>
-	public class Mutex : Semaphore, IDisposable 
+	public class Mutex : Semaphore 
 	{
 
 		/// <summary>
@@ -44,15 +44,6 @@ namespace DSalter.ConcurrentUtils
 //			base.Release();
 //		}
 
-		/// <summary>
-		/// This is to Lock the Mutex within a Using statement
-		/// </summary>
-		public IDisposable Lock()
-		{
-			base.Acquire ();
-
-			return this;
-		}
 
 		/// <summary>
 		/// Releases the mutex used by the <see cref="DSalter.ConcurrentUtils.Mutex"/> object.

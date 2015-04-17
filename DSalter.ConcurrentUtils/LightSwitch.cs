@@ -13,7 +13,7 @@ namespace DSalter.ConcurrentUtils
 	///
 	/// Author: Dale Salter 9724397
 	/// </summary>
-	public class LightSwitch
+	public class LightSwitch 
 	{
 		/// <summary>
 		/// The total number of readers active on the resource

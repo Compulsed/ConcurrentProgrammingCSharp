@@ -18,6 +18,43 @@ namespace DSalter.ConcurrentUtils
 		protected UInt64 _count;
 		protected Object objectLock = new Object();
 
+		private class SemaphoreReleaser : IDisposable
+		{
+			private readonly Semaphore toRelease;
+
+			public SemaphoreReleaser(Semaphore parent)
+			{
+				toRelease = parent;
+			}
+
+			~SemaphoreReleaser()
+			{
+				Dispose(false);
+			}
+
+			public void Dispose(bool disposed)
+			{
+				toRelease.Release ();
+				if (disposed)
+					GC.SuppressFinalize (this);
+			}
+
+			public void Dispose()
+			{
+				Dispose (true);
+			}
+		}
+
+		/// <summary>
+		/// Use when used withing a using block, for example
+		/// 	using(aSemaphore.lock()){}
+		/// 	allows for exception safety / and eartly returns
+		/// </summary>
+		public IDisposable Lock()
+		{
+			return new SemaphoreReleaser (this);
+		}
+
 		/// <summary>
 		/// Creates the Semaphore, returns an instance with 0 tokens
 		/// </summary>
