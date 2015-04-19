@@ -10,21 +10,25 @@ using System.Text;
 
 namespace DSalter.ConcurrentUtils
 {
-	public class MessageEchoer : ChannelActiveObject<Tuple<Socket, string>>
+	public class MessageEchoer : ChannelActiveObject<Connection>
 	{
-		public MessageEchoer(){}
+		ConnectionManager _a;
 
-		protected override void Process (Tuple<Socket, string> passedData)
+
+		public MessageEchoer()
 		{
-			Socket socket = passedData.Item1;
-			string message = "Echo back -> " + passedData.Item2;
+			_a = new ConnectionManager (base._inputChannel);
+			_a.Start ();
+		}
 
-			byte[] messageBytes = new byte[message.Length * sizeof(char)];
-			System.Buffer.BlockCopy (message.ToCharArray (), 0, messageBytes, 0, messageBytes.Length);
+		protected override void Process (Connection con)
+		{
+			ConnectionWithMessage aMessageCon = (ConnectionWithMessage)con;
 
-			socket.Send (messageBytes, messageBytes.Length, SocketFlags.None);
 
-			Console.WriteLine (message + "\n");
+			con.writer.WriteLine (aMessageCon.message);
+
+			Console.WriteLine (aMessageCon.message);
 		}
 	}
 }

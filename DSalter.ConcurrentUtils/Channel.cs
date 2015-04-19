@@ -20,25 +20,25 @@ namespace DSalter.ConcurrentUtils
 		protected Queue<T> channelQueue = new Queue<T>();
 
 		/// <summary>
-		/// Creates a new thread safe channel on which you can queue and deque
+		/// Creates a new thread safe channel on which you can queue and deque.
 		/// </summary>
 		public Channel (){}
 
 		/// <summary>
-		/// Used to safely enqueue data to the channel
+		/// Used to safely enqueue data to the channel.
 		/// </summary>
-		/// <param name="data">The data to enqueue to the channel</param>
+		/// <param name="data">The data to enqueue into the channel.</param>
 		public virtual void Put(T data)
 		{
 			lock (queueLock) {
 				// Has to be inside the lock because our count is provided by the semaphore
 				channelQueue.Enqueue (data);
-				resource.Release ();
 			}
+			resource.Release ();
 		}
 
 		/// <summary>
-		/// Used to safely dequeue data off of the channel
+		/// Used to safely dequeue data off of the channel.
 		/// </summary>
 		public virtual T Take()
 		{

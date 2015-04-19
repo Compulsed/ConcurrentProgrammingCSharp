@@ -5,39 +5,101 @@ using Thread = System.Threading.Thread;
 using System.Net;
 using System.Net.Sockets;
 using System.Collections.Generic;
-
+using System.IO;
 using System.Text;
 
 
 namespace DSalter.ConcurrentUtils
 {
+
+	public class Connection
+	{
+		private StreamReader _reader;
+		private StreamWriter _writer;
+		private Socket _client;
+		private NetworkStream _ns;
+
+		public Connection(Socket client)
+		{
+			_ns = new NetworkStream (client);
+
+			_reader = new StreamReader (_ns);
+			_writer = new StreamWriter (_ns);
+			_client = client;
+		}
+
+		public Connection(Connection conn)
+		{
+			_reader = conn.reader;
+			_writer = conn.writer;
+			_client = conn.client;
+			_ns = conn._ns;
+		}
+
+
+		public StreamReader reader
+		{
+			get { return _reader; } 
+		}
+
+		public StreamWriter writer
+		{
+			get { return _writer; }
+		}
+
+		public Socket client
+		{
+			get { return _client; }
+		}
+
+		public NetworkStream ns
+		{
+			get { return _ns; }
+		}
+	}
+
+	public class ConnectionWithMessage : Connection 
+	{
+		private string _message;
+
+		public ConnectionWithMessage(Socket client) : base(client)
+		{
+			_message = base.reader.ReadLine ();
+		}
+
+		public ConnectionWithMessage(Connection passedConn) : base(passedConn)
+		{
+			_message = base.reader.ReadLine ();
+		}
+
+		public string message
+		{
+			get { return _message; }
+		}
+	 } 
+
 	public class ConnectionManager : ActiveObject
 	{
 		Socket _mainSocket;
 		IPEndPoint _iep;
+		Channel<Connection> _outputChannel;
 
 		List<Socket> _socketList = new List<Socket>();
 
-		byte[] _data;
-		string _stringData;
-		int _recv;
-
-		MessageEchoer _echoer = new MessageEchoer ();
-
-		public ConnectionManager (UInt16 mainPort = 8000, int maxConnectionQueue = 30)
+		public ConnectionManager (Channel<Connection> outputChannel, UInt16 mainPort = 8000, int maxConnectionQueue = 30)
 		{
 			_mainSocket = new Socket (AddressFamily.InterNetwork,
 				SocketType.Stream, ProtocolType.Tcp);
 
 			_iep = new IPEndPoint (IPAddress.Any, mainPort);
 
+			_outputChannel = outputChannel;
+
 			_mainSocket.Bind (_iep);
 			_mainSocket.Listen (maxConnectionQueue);
 			_socketList.Add (_mainSocket);
 
-			_echoer.Start ();
 		}
-
 
 		protected override void Run ()
 		{
@@ -45,14 +107,13 @@ namespace DSalter.ConcurrentUtils
 
 			List<Socket> socketListCopy;
 			while (true) {
-
 				socketListCopy = new List<Socket> (_socketList);
 
 
 				Socket.Select (socketListCopy, null, null, -1);
 
 				// if the returned socket is the one listening for connections
-				// We now need to process the new connection, and then remove it
+				// We now need to process the new connection, and then remove it from further processing
 				if (socketListCopy [0] == _mainSocket) {
 					Socket client = socketListCopy [0].Accept ();
 					_socketList.Add (client);
@@ -63,20 +124,18 @@ namespace DSalter.ConcurrentUtils
 
 
 				foreach (Socket client in socketListCopy) {
-					_data = new byte[1024];
-					_recv = client.Receive (_data);
-					_stringData = Encoding.ASCII.GetString (_data, 0, _recv);
 
-					Console.WriteLine ("Received: {0}From: {1}", _stringData, ((IPEndPoint)client.RemoteEndPoint).ToString ());
-
-					if (_recv == 0) {
+					// If there in no data on the socket, but something has changed on the socket state, it has been disconnected
+					if (client.Available == 0) {
 						Console.WriteLine ("Client {0} disconnected.", ((IPEndPoint)client.RemoteEndPoint).ToString ());
 						client.Close ();
 						_socketList.Remove (client);
 					}
 					else {
-						// TODO: Figure out how to decouple this echoer
-						_echoer._inputChannel.Put (new Tuple<Socket, String>(client, _stringData));
+						// How can I deatch this?
+						// Must do the reading on this thread or bugs will happen
+
+						_outputChannel.Put (new ConnectionWithMessage (client));
 					}
 				}
 
