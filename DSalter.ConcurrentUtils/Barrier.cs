@@ -39,7 +39,7 @@ namespace DSalter.ConcurrentUtils
 					--threadsArrived;
 
 					barrierExitPermission.Release (threadsToContinue - 1); 
-					return true; // The last thread returns with a true status
+					return true; // The first thread returns with a true status
 				}
 			}
 			turnstile.Release();
