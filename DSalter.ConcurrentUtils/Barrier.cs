@@ -18,7 +18,7 @@ namespace DSalter.ConcurrentUtils
 		Semaphore barrierExitPermission = new Semaphore(0);
 		Mutex turnstile = new Mutex();		// Used to satisfy test #3
 
-		UInt64 threadsArrived;				// Number of threads waiting to move forward
+		UInt64 threadsArrived = 0;				// Number of threads waiting to move forward
 		readonly UInt64 threadsToContinue;	// Number of required threads for them to move forward
 
 		/// <summary>
@@ -39,6 +39,11 @@ namespace DSalter.ConcurrentUtils
 					--threadsArrived;
 
 					barrierExitPermission.Release (threadsToContinue - 1); 
+
+					// If there is only one thread, the TS will need to be released
+					if (threadsArrived == 0)
+						turnstile.Release ();
+
 					return true; // The first thread returns with a true status
 				}
 			}
@@ -49,9 +54,9 @@ namespace DSalter.ConcurrentUtils
 			lock (this) {
 				--threadsArrived;
 
-				if (threadsArrived == 0) {
+				if (threadsArrived == 0) 
 					turnstile.Release ();
-				}
+				
 			}
 
 			return false; // All other threads return will a false status
