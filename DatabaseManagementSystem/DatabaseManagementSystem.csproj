@@ -42,4 +42,10 @@
     <Compile Include="ResultSet.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\DSalter.ConcurrentUtils\DSalter.ConcurrentUtils.csproj">
+      <Project>{A0937808-2A50-4F81-B088-8CF7EA2543D8}</Project>
+      <Name>DSalter.ConcurrentUtils</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>
