@@ -160,6 +160,7 @@ namespace DSalter.Submissions
 
 					Thread thread = new Thread (() => {
 						// Will this work correctly? May reuse same numbers (it does)
+						// Set a timer to generate random numbers
 						Random generator = new Random ();
 
 						while (start < end) {

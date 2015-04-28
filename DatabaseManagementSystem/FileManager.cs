@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 using DSalter.ConcurrentUtils;
 
@@ -37,23 +38,53 @@ namespace DatabaseManagementSystem
 	/// 	cached objects can be freed if memory is scarce. 
 	/// 
 	/// </summary>
-	public class FileManager<RowType> : ChannelActiveObject<Request>
+	public class FileManager : ChannelActiveObject<Request>
 	{
 
 		// Binary, each row takes a fixed no bytes
 		// Strings are to be fixed size
 		// File tableFile;
 
-		// Must have access to the cache
-
 		// Weak references for the Rows
+		// Must have access to the cache
+		Dictionary<UInt64, Row> _rowCache;
+
+		// Loccation of first free space? // #2
+
+		// - Where a new row can be inserted if a deleted row is not replaced
+
+		// Next row that will be used when a new record is made
+		UInt64 _idOfNextRow; // #4
+
+		// Total rows the table has (not the same as _idOfNextRow? active rows?)
+		UInt64 _numberOfRows; // #1
 
 
+		FileStream _databaseFile;
+		BinaryWriter _binaryWriter;
+		BinaryReader _binaryReader;
 
-		public FileManager ()
+
+		// Key: Row ID, Value: Offset on file // #3
+		Dictionary<UInt64, UInt64> _rowLocationInFile;
+
+
+		string _fileName;
+
+		public FileManager (Dictionary<UInt64, Row> rowCache, string fileName = "database.db")
 		{
+			_numberOfRows = 0;
+			_idOfNextRow = 0;
+			_rowLocationInFile = new Dictionary<UInt64, UInt64> ();
 
 
+			_rowCache = rowCache;
+			_fileName = fileName;
+			_databaseFile = new FileStream (_fileName, FileMode.OpenOrCreate, 
+				FileAccess.ReadWrite, FileShare.None);
+
+			_binaryReader = new BinaryReader (_databaseFile, System.Text.Encoding.Unicode);
+			_binaryWriter = new BinaryWriter (_databaseFile, System.Text.Encoding.Unicode);
 		}
 
 

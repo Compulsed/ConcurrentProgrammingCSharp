@@ -22,38 +22,26 @@ namespace DatabaseManagementSystem
 	/// 	to read the missing rows from the file
 	///	The file manager sets the result status and opens the latch 
 	///
-	/// This is the cache?
 	/// 
 	/// Handles the FileManager
 	/// 
 	/// </summary>
-	public class Table<RowType>
+	public class Table
 	{
-		// Total rows the table has (not the same as _idOfNextRow? active rows?)
-		UInt64 _numberOfRows; // #1
+		// Stores the actual representation of the file
+		FileManager fileManager;
 
-		// Next row that will be used when a new record is made
-		UInt64 _idOfNextRow; // #4
-
-		// Loccation of first free space? // #2
-		// - Where a new row can be inserted if a deleted row is not replaced
-		// Where is this populated or handles
-
-		// Key: Row ID, Value: Offset on file // #3
-		Dictionary<UInt64, UInt64> _rowLocationInFile;
 
 		// Key: Row ID, Value: Row is cache
-		Dictionary<UInt64, Row> _rowCache; // #5
+		Dictionary<UInt64, Row> _rowCache; 
 
 
-		public Table ()
+		public Table (string fileName = "tablename.db")
 		{
-			_numberOfRows = 0;
-			_idOfNextRow = 0;
-			_rowLocationInFile = new Dictionary<UInt64, UInt64> ();
 			_rowCache = new Dictionary<UInt64, Row> ();
 
-
+			fileManager = new FileManager (_rowCache, fileName);
+			fileManager.Start ();
 		}
 
 		// Should interface with FileManager to get records that

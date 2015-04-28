@@ -1,15 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DatabaseManagementSystem
 {
 
-	public enum ActionType
-	{
-		READ = 0,
-		CREATE,
-		UPDATE,
-		DELETE
-	}
 
 	public class Request
 	{
@@ -17,13 +11,14 @@ namespace DatabaseManagementSystem
 		// - Read: ranges
 		// - Update: Create & Delete
 		// - Create & Delete: Set of rows to be changed, and how each row should changed
-		ResultSet toBePopulated; // Or with RequiredChanges?
-
+		RequestRow rows; // Or with RequiredChanges?
 
 		public Request()
 		{
 
 		}
+
+
 	}
 
 	/// <summary>
@@ -45,14 +40,14 @@ namespace DatabaseManagementSystem
 	public class TableManager
 	{
 
-		Table<StringRow> mainTable; 
-		FileManager<StringRow> mainFileManager;
+		Table mainTable; 
+		FileManager mainFileManager;
 
 		public TableManager ()
 		{
-			mainTable = new Table<StringRow> ();
+			mainTable = new Table ();
 
-			mainFileManager = new FileManager<StringRow> ();
+			// mainFileManager = new FileManager();
 		}
 
 		void Create(Request aCreateRequest)

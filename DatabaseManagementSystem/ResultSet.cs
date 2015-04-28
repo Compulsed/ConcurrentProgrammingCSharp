@@ -16,12 +16,43 @@ namespace DatabaseManagementSystem
 	/// - A latch opened when the value is ready (within the get accessors for rows and the status)
 	/// 
 	/// </summary>
+	/// 
+
+	public enum ActionType
+	{
+		READ = 0,
+		CREATE,
+		UPDATE,
+		DELETE,
+	}
+
+
+	public class RequestRow
+	{
+		// On read(id, rowObj?), row is return
+		// On delete(id, rowObj?), check _hasSucceeded status
+
+		// On update(oldObject, newObject) the new row is returned
+		// On update(id, newObject)
+
+		// On create(rowObj), check _hasSucceeded or row returned?
+		private Row _row;
+
+		private Latch _rowLatch;
+		private bool _hasSucceeded;
+		private ActionType _dbAction;
+
+		public Row row { get { return _row; } }
+
+		public RequestRow(ActionType aAction)
+		{
+
+		}
+	}
+
 	public class ResultSet
 	{
-
-		List<Row> _rowObjects;
-		Latch _completedLatch;
-		bool _hasSucceeded;
+		List<RequestRow> _rowObjects;
 
 		public ResultSet ()
 		{
