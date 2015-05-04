@@ -4,23 +4,6 @@ using System.Collections.Generic;
 namespace DatabaseManagementSystem
 {
 
-
-	public class Request
-	{
-		// QueryDetails (MultipleActions?)
-		// - Read: ranges
-		// - Update: Create & Delete
-		// - Create & Delete: Set of rows to be changed, and how each row should changed
-		RequestRow rows; // Or with RequiredChanges?
-
-		public Request()
-		{
-
-		}
-
-
-	}
-
 	/// <summary>
 	/// Table manager.
 	///
@@ -37,42 +20,29 @@ namespace DatabaseManagementSystem
 	/// Concept of "Action type"
 	/// 
 	/// </summary>
-	public class TableManager
+
+	public class TableManager 
 	{
 
 		Table mainTable; 
-		FileManager mainFileManager;
 
-		public TableManager ()
+		public TableManager (string fileName = "database.db")
 		{
-			mainTable = new Table ();
-
-			// mainFileManager = new FileManager();
+			mainTable = new Table (fileName);
 		}
 
-		void Create(Request aCreateRequest)
+
+		public void Execute(RandomRequest aRandomRequest)
 		{
-		
+			Console.WriteLine ("Random request sent!");
+			mainTable.Execute (aRandomRequest);
 		}
 
-		// Includes: Create and Delete
-		void Update(Request aUpdateRequest)
-		{
 
-		}
-
-		void Delete(Request aDeleteRequest)
-		{
-
-		}
-
-		// Include a range
-		// Will load or fetch rows from the Table cache and populate the ResultSet
-		void Read(Request aReadRequest)
-		{
-
-		}
-
+		// public void Execute (UpdateRequest aUpdateRequest)
+		//{
+		// 	Console.WriteLine ("Update request sent!");
+		// }
 	}
 }
 

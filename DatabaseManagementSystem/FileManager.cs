@@ -74,7 +74,7 @@ namespace DatabaseManagementSystem
 		public FileManager (Dictionary<UInt64, Row> rowCache, string fileName = "database.db")
 		{
 			_numberOfRows = 0;
-			_idOfNextRow = 0;
+			_idOfNextRow = 1;
 			_rowLocationInFile = new Dictionary<UInt64, UInt64> ();
 
 
@@ -87,10 +87,39 @@ namespace DatabaseManagementSystem
 			_binaryWriter = new BinaryWriter (_databaseFile, System.Text.Encoding.Unicode);
 		}
 
+		void ProcessRequest(RandomRequest aRandomRequest)
+		{
+			Console.WriteLine ("FileManager -> Processing aRandomRequest");
 
+			ResultSet localResultSet = aRandomRequest.ResulltSet;
+			// List<Row> rowObjectsToBeCompleted = localResultSet._rowObjectsToBeCompleted;
+			// List<Row> rowObjectsCompleted = localResultSet._rowObjectsCompleted;
+
+			localResultSet._rowObjectsCompleted = new List<Row> ();
+
+
+			//foreach (Row _rowObjectsToBeCompleted in rowObjectsToBeCompleted) {
+			for(UInt64 i = 0; i < aRandomRequest.randomRowsToMake; ++i){
+				UInt64 thisRowId = _idOfNextRow++;
+
+				Row rowToBeAdded = new Row (thisRowId, "Hello -> " + _idOfNextRow);
+
+				Console.WriteLine (rowToBeAdded);
+
+				_rowCache.Add (thisRowId, rowToBeAdded);
+
+				rowToBeAdded.Write(_binaryWriter);
+
+				localResultSet._rowObjectsCompleted.Add (rowToBeAdded);
+				localResultSet._completedLatch.Release ();
+			}
+
+		}
 
 		protected override void Process (Request passedData)
 		{
+
+			ProcessRequest ((dynamic)passedData);
 
 			// If Reading, check that it is not already in the cache
 			// if it is, add to the ResultSet, if not fetch from file
@@ -108,7 +137,7 @@ namespace DatabaseManagementSystem
 
 			// Add a compress method later on
 
-			throw new NotImplementedException ();
+			// throw new NotImplementedException ();
 		}
 	}
 }

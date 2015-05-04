@@ -11,10 +11,15 @@ namespace DatabaseManagementSystem
 	{
 
 
-		public static void Main (string[] args)
-		{
-			Table one = new Table ("test.db");
+		public static void Main (string[] args){
 
+			TableManager a = new TableManager ("database.db");
+
+			Request rr = RequestFactory.messageToRequest ("r,42");
+			// Request ur = RequestFactory.messageToRequest ("u,42");
+
+			a.Execute ((dynamic)rr);
+			// a.Execute ((dynamic)ur);
 
 			return;
 		}

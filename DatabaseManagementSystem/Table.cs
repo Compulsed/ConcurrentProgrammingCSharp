@@ -31,6 +31,7 @@ namespace DatabaseManagementSystem
 		// Stores the actual representation of the file
 		FileManager fileManager;
 
+		Channel<Request> fileManagerChannel;
 
 		// Key: Row ID, Value: Row is cache
 		Dictionary<UInt64, Row> _rowCache; 
@@ -41,6 +42,7 @@ namespace DatabaseManagementSystem
 			_rowCache = new Dictionary<UInt64, Row> ();
 
 			fileManager = new FileManager (_rowCache, fileName);
+			fileManagerChannel = fileManager._inputChannel;
 			fileManager.Start ();
 		}
 
@@ -54,10 +56,17 @@ namespace DatabaseManagementSystem
 			// if cached handle and set latch and status
 		}
 
-		void Update(Request aUpdateRequest)
-		{
+		// void Update(Request aUpdateRequest)
+		// {
 			// Always pass to the FileManager
+		//}
+
+		public void Execute (RandomRequest aRandomRequest)
+		{
+			Console.WriteLine ("Table -> Sending aRandomRequest");
+			fileManagerChannel.Put (aRandomRequest);
 		}
+
 	}
 }
 

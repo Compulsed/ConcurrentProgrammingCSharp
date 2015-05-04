@@ -35,6 +35,14 @@ namespace DatabaseManagementSystem
 			// Leaves enough room for null terminator
 			_charString = (Truncate (toCharString, (int)(_charLength - 1)) + Char.MinValue).ToCharArray (); 
 		}
+
+		public Row(string toCharString)
+		{
+			_rowId = 0;
+
+			_charString = (Truncate (toCharString, (int)(_charLength - 1)) + Char.MinValue).ToCharArray (); 
+		}
+
 			
 
 		public override string ToString() 

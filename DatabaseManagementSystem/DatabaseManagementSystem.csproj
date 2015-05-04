@@ -32,6 +32,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -41,6 +42,8 @@
     <Compile Include="Table.cs" />
     <Compile Include="Row.cs" />
     <Compile Include="ResultSet.cs" />
+    <Compile Include="ConnectionManager.cs" />
+    <Compile Include="QueryManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

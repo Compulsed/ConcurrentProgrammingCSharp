@@ -18,62 +18,46 @@ namespace DatabaseManagementSystem
 	/// </summary>
 	/// 
 
-	public enum ActionType
-	{
-		READ = 0,
-		CREATE,
-		UPDATE,
-		DELETE,
-	}
-
-
-	public class RequestRow
-	{
-		// On read(id, rowObj?), row is return
-		// On delete(id, rowObj?), check _hasSucceeded status
-
-		// On update(oldObject, newObject) the new row is returned
-		// On update(id, newObject)
-
-		// On create(rowObj), check _hasSucceeded or row returned?
-		private Row _row;
-
-		private Latch _rowLatch;
-		private bool _hasSucceeded;
-		private ActionType _dbAction;
-
-		public Row row { get { return _row; } }
-
-		public RequestRow(ActionType aAction)
-		{
-
-		}
-	}
 
 	public class ResultSet
 	{
-		List<RequestRow> _rowObjects;
+		public List<Row> _rowObjectsCompleted = new List<Row>();
+		public List<Row> _rowObjectsToBeCompleted;
 
-		public ResultSet ()
+		public bool _hasSucceeded;
+
+		public bool _hasCompleted = false;
+		public Latch _completedLatch;
+
+
+		public ResultSet (List<Row> uncompletedRows)
 		{
-			_rowObjects = new List<Row> ();
 			_completedLatch = new Latch ();
-		}
 
+			_rowObjectsToBeCompleted = uncompletedRows;
+		}
+			
 
 		public List<Row> getRows()
 		{
 			_completedLatch.Acquire ();
 
-			return _rowObjects;
+			return _rowObjectsCompleted;
 		}
 
-		public bool hasCompleted()
+		public bool hasCompletionStatus()
 		{
 			_completedLatch.Acquire ();
 
 			return _hasSucceeded;
 		}
+
+
 	}
+
+
+
+
+
 }
 
