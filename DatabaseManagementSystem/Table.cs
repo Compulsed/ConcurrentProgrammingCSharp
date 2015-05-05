@@ -30,12 +30,10 @@ namespace DatabaseManagementSystem
 	{
 		// Stores the actual representation of the file
 		FileManager fileManager;
-
 		Channel<Request> fileManagerChannel;
 
 		// Key: Row ID, Value: Row is cache
 		Dictionary<UInt64, Row> _rowCache; 
-
 
 		public Table (string fileName = "tablename.db")
 		{
@@ -44,6 +42,11 @@ namespace DatabaseManagementSystem
 			fileManager = new FileManager (_rowCache, fileName);
 			fileManagerChannel = fileManager._inputChannel;
 			fileManager.Start ();
+		}
+
+		public void Print()
+		{
+			Console.WriteLine (_rowCache);
 		}
 
 		// Should interface with FileManager to get records that

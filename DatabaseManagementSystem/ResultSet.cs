@@ -21,7 +21,7 @@ namespace DatabaseManagementSystem
 
 	public class ResultSet
 	{
-		public List<Row> _rowObjectsCompleted = new List<Row>();
+		public List<Row> _rowObjectsCompleted;
 		public List<Row> _rowObjectsToBeCompleted;
 
 		public bool _hasSucceeded;

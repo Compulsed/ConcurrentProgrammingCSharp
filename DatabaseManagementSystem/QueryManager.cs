@@ -14,10 +14,11 @@ namespace DatabaseManagementSystem
 
 	public abstract class Request 
 	{
-		protected ResultSet resultSet;
+		public ResultSet resultSet;
 
-		public Request()
+		public Request(UInt64 randomRowsToMake)
 		{
+			resultSet = new ResultSet (new List<Row> ((int)randomRowsToMake));
 		}
 
 		public ResultSet ResulltSet {
@@ -70,10 +71,10 @@ namespace DatabaseManagementSystem
 	{
 		public UInt64 randomRowsToMake;
 
-		public RandomRequest(UInt64 randomRowsToMake) 
+		public RandomRequest(UInt64 randomRowsToMake) : base(randomRowsToMake)
 		{
 			this.randomRowsToMake = randomRowsToMake;
-			// base.resultSet._rowObjectsToBeCompleted = new List<Row> ((int)randomRowsToMake);
+			base.resultSet._rowObjectsCompleted = new List<Row> ();
 		}
 
 		public UInt64 RandomRowsToMake {

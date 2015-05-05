@@ -18,7 +18,7 @@ namespace DatabaseManagementSystem
 
 		// 2 bytes * length
 		Char[] _charString;
-		const UInt64 _charLength = 10; // Includes the null terminator 
+		const UInt64 _charLength = 20; // Includes the null terminator 
 
 
 		public Row ()

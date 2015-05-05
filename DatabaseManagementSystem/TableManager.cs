@@ -38,6 +38,10 @@ namespace DatabaseManagementSystem
 			mainTable.Execute (aRandomRequest);
 		}
 
+		public void Print()
+		{
+			mainTable.Print ();
+		}
 
 		// public void Execute (UpdateRequest aUpdateRequest)
 		//{

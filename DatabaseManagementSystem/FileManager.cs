@@ -85,24 +85,19 @@ namespace DatabaseManagementSystem
 
 			_binaryReader = new BinaryReader (_databaseFile, System.Text.Encoding.Unicode);
 			_binaryWriter = new BinaryWriter (_databaseFile, System.Text.Encoding.Unicode);
+
+			Console.WriteLine ("Creating file: " + fileName);
 		}
 
 		void ProcessRequest(RandomRequest aRandomRequest)
 		{
 			Console.WriteLine ("FileManager -> Processing aRandomRequest");
 
-			ResultSet localResultSet = aRandomRequest.ResulltSet;
-			// List<Row> rowObjectsToBeCompleted = localResultSet._rowObjectsToBeCompleted;
-			// List<Row> rowObjectsCompleted = localResultSet._rowObjectsCompleted;
 
-			localResultSet._rowObjectsCompleted = new List<Row> ();
-
-
-			//foreach (Row _rowObjectsToBeCompleted in rowObjectsToBeCompleted) {
 			for(UInt64 i = 0; i < aRandomRequest.randomRowsToMake; ++i){
 				UInt64 thisRowId = _idOfNextRow++;
 
-				Row rowToBeAdded = new Row (thisRowId, "Hello -> " + _idOfNextRow);
+				Row rowToBeAdded = new Row (thisRowId, "R -> " + thisRowId);
 
 				Console.WriteLine (rowToBeAdded);
 
@@ -110,11 +105,12 @@ namespace DatabaseManagementSystem
 
 				rowToBeAdded.Write(_binaryWriter);
 
-				localResultSet._rowObjectsCompleted.Add (rowToBeAdded);
-				localResultSet._completedLatch.Release ();
+				aRandomRequest.resultSet._rowObjectsCompleted.Add (rowToBeAdded);
+				aRandomRequest.resultSet._completedLatch.Release ();
 			}
 
 		}
+			
 
 		protected override void Process (Request passedData)
 		{

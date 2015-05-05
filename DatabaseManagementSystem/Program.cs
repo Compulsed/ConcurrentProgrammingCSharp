@@ -7,19 +7,44 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace DatabaseManagementSystem
 {
+
+
 	class MainClass
 	{
 
-
-		public static void Main (string[] args){
-
+		public static void RPEL()
+		{
 			TableManager a = new TableManager ("database.db");
 
-			Request rr = RequestFactory.messageToRequest ("r,42");
-			// Request ur = RequestFactory.messageToRequest ("u,42");
+			Request rr = null;
 
-			a.Execute ((dynamic)rr);
-			// a.Execute ((dynamic)ur);
+			string inputText = "";
+			while (true) {
+				inputText = Console.ReadLine ();
+
+				if (inputText.Length == 0) {
+					Console.WriteLine ("Closing!");
+					return;
+				}
+
+				rr = RequestFactory.messageToRequest (inputText);
+				if(rr != null)
+					a.Execute ((dynamic)rr);
+
+			}
+
+
+			return;
+		}
+
+
+		public static void Main (string[] args){
+			TableManager a = new TableManager ("database.db");
+
+			Request rr = RequestFactory.messageToRequest ("r,2");
+			a.Execute((dynamic)rr);
+
+			a.Print ();
 
 			return;
 		}
