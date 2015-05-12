@@ -46,7 +46,11 @@ namespace DatabaseManagementSystem
 
 		public void Print()
 		{
-			Console.WriteLine (_rowCache);
+			// Console.WriteLine (_rowCache);
+			Console.WriteLine("-----------------------");
+			foreach (KeyValuePair<UInt64, Row> entry in _rowCache)
+				Console.WriteLine ("{0} : {1}", entry.Key, entry.Value);
+			Console.WriteLine("-----------------------");
 		}
 
 		// Should interface with FileManager to get records that
@@ -66,8 +70,19 @@ namespace DatabaseManagementSystem
 
 		public void Execute (RandomRequest aRandomRequest)
 		{
-			Console.WriteLine ("Table -> Sending aRandomRequest");
+			// Console.WriteLine ("Table -> Sending aRandomRequest");
 			fileManagerChannel.Put (aRandomRequest);
+		}
+
+		public void Execute(SelectRequest aSelectRequest)
+		{
+
+			for (UInt64 i = aSelectRequest.startId; i <= aSelectRequest.endId; ++i) {
+				Console.WriteLine (_rowCache [i]);
+			}
+
+			// Console.WriteLine ("Table -> Sending aSelectRequest");
+			// fileManagerChannel.Put (aSelectRequest);
 		}
 
 	}
