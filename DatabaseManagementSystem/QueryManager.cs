@@ -28,12 +28,8 @@ namespace DatabaseManagementSystem
 		}
 	}
 
-	/* public class SelectRequest : Request
-	{
-		
-	}
 
-	public class CreateRequest : Request 
+	/*public class CreateRequest : Request 
 	{
 
 	}
@@ -47,24 +43,6 @@ namespace DatabaseManagementSystem
 	{
 
 	}*/ 
-
-	// Just creates a bunch of nulled rows, will be filled in and then committed to the DB
-	/* public class UpdateRequest : Request
-	{
-		private UInt64 randomRowsToMake;
-
-		public UpdateRequest(UInt64 randomRowsToMake) 
-		{
-			this.randomRowsToMake = randomRowsToMake;
-			base.resultSet._rowObjectsToBeCompleted = new List<Row> ((int)randomRowsToMake);
-		}
-
-		public UInt64 RandomRowsToMake {
-			get {
-				return randomRowsToMake;
-			}
-		}
-	} */
 
 	// Just creates a bunch of nulled rows, will be filled in and then committed to the DB
 	public class RandomRequest : Request
@@ -84,6 +62,20 @@ namespace DatabaseManagementSystem
 		}
 	}
 
+	public class SelectRequest : Request
+	{
+		public UInt64 startId;
+		public UInt64 endId;
+
+		public SelectRequest(UInt64 start, UInt64 end) : base(end - start)
+		{
+			this.startId = start;
+			this.endId = end;
+
+			base.ResulltSet._rowObjectsCompleted = new List<Row> ();
+		}
+	}
+
 
 	public static class RequestFactory 
 	{
@@ -95,12 +87,12 @@ namespace DatabaseManagementSystem
 			return new RandomRequest (Convert.ToUInt64 (queryString));
 		}
 
-		/* private static UpdateRequest createUpdateRequest(string queryString)
+		private static SelectRequest createSelectRequest(string start, string end)
 		{
-			Console.WriteLine ("Generating {0} rows of update data!", queryString);
+			Console.WriteLine ("Selecting rows between [{0} - {1}]", start, end);
 
-			return new UpdateRequest (Convert.ToUInt64 (queryString));
-		} */
+			return new SelectRequest (Convert.ToUInt64 (start), Convert.ToUInt64(end));
+		} 
 
 
 			
@@ -117,7 +109,7 @@ namespace DatabaseManagementSystem
 
 			switch (queryType) {
 			case "s":
-				break;
+				return createSelectRequest (words [0], words [1]);
 			case "c":
 				break;
 			case "u":

@@ -5,13 +5,18 @@ using Monitor = System.Threading.Monitor;
 namespace DSalter.ConcurrentUtils
 {
 	/// <summary>
+	/// ReaderWriter locks are used to allow for unlimited reading when there is no writing
+	/// 	and a single writer then there is a need to write. This ReaderWriter lock avoids
+	/// 	starvation by internally using a FIFO Semaphore and ensures that all the threads
+	/// 	go through farily. 
 	/// 
-	/// 1 Solves the starvation for the writers
-	/// 
+	/// Additional things to node
+	/// 	If one reader goes through all of them go through
+	/// 	All writers are in a queued
+	/// 	No readers or writers will unfairly be starved
+	///     If a reader is active, other readers cannot skip the queue
 	///  
-	/// Starvation for the readers now exists, must queue the readers and writers up
-	/// 
-	/// 
+	/// Author: Dale Salter (9724 397)
 	/// </summary>
 	public class ReaderWriterLock
 	{
@@ -28,19 +33,27 @@ namespace DSalter.ConcurrentUtils
 		private Object lockObject;
 
 
+		/// <summary>
+		/// Initializes a new instance of tedse <see cref="DSalter.ConcurrentUtils.ReaderWriterLock"/> class.
+		/// </summary>
 		public ReaderWriterLock ()
 		{
-			writePermission = new Mutex();
+			writePermission = new FIFOSemaphore (1);
 			LS = new LightSwitch(writePermission);
 
 			readerTS = new Mutex ();
-			writerTS = new FIFOSemaphore (1);
+			writerTS = new Mutex ();
 
 			readersWaiting = 0;
 
 			lockObject = new object ();
 		}
 			
+		/// <summary>
+		/// Acquires the reader
+		/// 	If there is no convention the readers will just continue reading for as
+		/// 	long as they need to
+		/// </summary>
 		public void AcquireReader()
 		{
 
@@ -64,11 +77,18 @@ namespace DSalter.ConcurrentUtils
 			}
 		}
 
+
+		/// <summary>
+		/// Releases the reader, may now allow next writer to go
+		/// </summary>
 		public void ReleaseReader()
 		{
 			LS.Release();					// >> REMOVES READER FROM LS
 		}
 
+		/// <summary>
+		/// Acquires a writer, writers have mutal exclusion on the resource
+		/// </summary>
 		public void AcquireWriter()
 		{
 			// ---------------------- #1 Locker ----------------------------------------------------
@@ -86,6 +106,9 @@ namespace DSalter.ConcurrentUtils
 			// -------------------------------------------------------------------------------------
 		}
 
+		/// <summary>
+		/// Releases the writer, another writer my continue or all the readers may start reading
+		/// </summary>
 		public void ReleaseWriter()
 		{
 			writePermission.Release(); // >> REMOVES WRITER FROM WRITE QUEUE

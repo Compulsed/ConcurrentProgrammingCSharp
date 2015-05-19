@@ -2,13 +2,13 @@
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using Thread = System.Threading.Thread;
 
 // BrinaryReader, FileStream
+using System.Text;
 
 namespace DatabaseManagementSystem
 {
-
-
 	class MainClass
 	{
 
@@ -38,13 +38,24 @@ namespace DatabaseManagementSystem
 		}
 
 
-		public static void Main (string[] args){
+		public static void TM()
+		{
 			TableManager a = new TableManager ("database.db");
 
 			Request rr = RequestFactory.messageToRequest ("r,2");
 			a.Execute((dynamic)rr);
 
-			a.Print ();
+			Thread.Sleep (2000);
+
+			Request sr = RequestFactory.messageToRequest ("s,1,2");
+			a.Execute ((dynamic)sr);
+		}
+
+		public static void Main (string[] args){
+
+
+			TM ();
+
 
 			return;
 		}

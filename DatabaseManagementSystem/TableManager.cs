@@ -34,14 +34,15 @@ namespace DatabaseManagementSystem
 
 		public void Execute(RandomRequest aRandomRequest)
 		{
-			Console.WriteLine ("Random request sent!");
+			// Console.WriteLine ("Random request sent!");
 			mainTable.Execute (aRandomRequest);
 		}
 
-		public void Print()
+		public void Execute(SelectRequest aSelectRequest)
 		{
-			mainTable.Print ();
-		}
+			// Console.WriteLine ("Select request send!");
+			mainTable.Execute (aSelectRequest);
+		} 
 
 		// public void Execute (UpdateRequest aUpdateRequest)
 		//{

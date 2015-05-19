@@ -16,34 +16,11 @@ namespace DSalter.ConcurrentUtils
 	public class Semaphore
 	{
 		protected UInt64 _count;
+
 		protected Object objectLock = new Object();
 
-		private class SemaphoreReleaser : IDisposable
-		{
-			private readonly Semaphore toRelease;
+		protected UInt64 threadsWaiting = 0;
 
-			public SemaphoreReleaser(Semaphore parent)
-			{
-				toRelease = parent;
-			}
-
-			~SemaphoreReleaser()
-			{
-				Dispose(false);
-			}
-
-			public void Dispose(bool disposed)
-			{
-				toRelease.Release ();
-				if (disposed)
-					GC.SuppressFinalize (this);
-			}
-
-			public void Dispose()
-			{
-				Dispose (true);
-			}
-		}
 
 		/// <summary>
 		/// Use when used withing a using block, for example
@@ -71,7 +48,6 @@ namespace DSalter.ConcurrentUtils
 		}
 
 
-
 		/// <summary>
 		/// Releases the specified tokens back to the Semaphore.
 		/// </summary>
@@ -80,26 +56,118 @@ namespace DSalter.ConcurrentUtils
 		{
 			lock (objectLock) {
 				_count += tokensToRelease;
-				Monitor.PulseAll (objectLock);
+				if(_count > 0)
+					Monitor.Pulse (objectLock);
 			}
 		}
 
 		/// <summary>
-		/// Waits for tokens to be available, then takes a token
+		/// Stops the Release process being interuppted by the ThreadInterruptException
+		/// 	This is needed for other utilities
+		/// </summary>
+		/// <param name="tokensToRelease">Tokens to release.</param>
+		public virtual void ForceRelease(UInt64 tokensToRelease = 1){
+			Boolean interrupted = false;
+
+			while(true){
+				try {
+					Release(tokensToRelease);
+					if (interrupted){
+						Thread.CurrentThread.Interrupt();
+					}
+					return;
+				}
+				catch (ThreadInterruptedException) {
+					interrupted = true;
+				}
+			}
+
+		}
+
+
+		/// <summary>
+		/// Waits for tokens to be available, then takes a token. The thread will block until there is a token.
 		/// </summary>
 		public virtual void Acquire()
 		{
+			TryAcquire (-1);
+		}
+
+		/// <summary>
+		/// Tries the acquire, if given a certain amount of time a acquire could not happen
+		/// it will just release and return false
+		/// 
+		/// This operation gracefully handles thread interrupts
+		/// </summary>
+		/// <returns><c>true</c>, if acquire was successfuk, <c>false</c> otherwise.</returns>
+		/// <param name="timeout">Timeout time waiting in milliseconds</param>
+		public virtual bool TryAcquire(int timeout)
+		{
 			lock (objectLock) {
 
-				// While there is no tokens
+				threadsWaiting++;
+
 				while (_count == 0) {
-					Monitor.Wait (objectLock);
+					try {
+						// Interrupt may occur here
+						if (!Monitor.Wait(objectLock, timeout)){
+							return false;
+						}
+					}
+					catch (ThreadInterruptedException){
+						lock (objectLock)
+						{
+							// One less thread waiting, to avoid concurrency problems (special cases)
+							// 	we should pulse other threads on this Semaphore 
+							// -> A token is released while we are catching an exception
+							if ((threadsWaiting - 1) > 0) {
+								Monitor.Pulse (objectLock);
+							}
+							--threadsWaiting;
+						}
+						throw;
+					}
 				}
 					
-				_count -= 1; 
+				threadsWaiting--;
+				_count--;
+
+				// There may be other threads waiting, if there are
+				// and there is still additional tokens, a single pulse should be done
+				if (_count > 0 && threadsWaiting > 0) {
+					Monitor.Pulse (objectLock);
+				}
+
+				return true;
 			}
 		}
 
+		private class SemaphoreReleaser : IDisposable
+		{
+			private readonly Semaphore toRelease;
+
+			public SemaphoreReleaser(Semaphore parent)
+			{
+				toRelease = parent;
+			}
+
+			~SemaphoreReleaser()
+			{
+				Dispose(false);
+			}
+
+			public void Dispose(bool disposed)
+			{
+				toRelease.Release ();
+				if (disposed)
+					GC.SuppressFinalize (this);
+			}
+
+			public void Dispose()
+			{
+				Dispose (true);
+			}
+		}
 
 
 	}

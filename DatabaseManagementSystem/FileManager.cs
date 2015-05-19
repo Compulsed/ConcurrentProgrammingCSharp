@@ -89,6 +89,9 @@ namespace DatabaseManagementSystem
 			Console.WriteLine ("Creating file: " + fileName);
 		}
 
+
+
+
 		void ProcessRequest(RandomRequest aRandomRequest)
 		{
 			Console.WriteLine ("FileManager -> Processing aRandomRequest");
@@ -96,6 +99,7 @@ namespace DatabaseManagementSystem
 
 			for(UInt64 i = 0; i < aRandomRequest.randomRowsToMake; ++i){
 				UInt64 thisRowId = _idOfNextRow++;
+				++_numberOfRows;
 
 				Row rowToBeAdded = new Row (thisRowId, "R -> " + thisRowId);
 
@@ -109,8 +113,15 @@ namespace DatabaseManagementSystem
 				aRandomRequest.resultSet._completedLatch.Release ();
 			}
 
+			PrintKeyValue ();
+			PrintFile ();
 		}
-			
+
+
+		void ProcessRequest(SelectRequest aSelectRequest)
+		{
+			Console.WriteLine ("FileManager -> Processing aSelectRequest");
+		}
 
 		protected override void Process (Request passedData)
 		{
@@ -134,6 +145,34 @@ namespace DatabaseManagementSystem
 			// Add a compress method later on
 
 			// throw new NotImplementedException ();
+		}
+
+		public void PrintKeyValue()
+		{
+			Console.WriteLine("\n-----------------------");
+			Console.WriteLine("----- Row Cache -------");
+			Console.WriteLine("-----------------------");
+			foreach (KeyValuePair<UInt64, Row> entry in _rowCache)
+				Console.WriteLine ("(Key: {0}, Value {1})", entry.Key, entry.Value);
+			Console.WriteLine("-----------------------");
+		}
+
+		public void PrintFile()
+		{
+			Console.WriteLine("\n-----------------------");
+			Console.WriteLine("----- File Contents ---");
+			Console.WriteLine("-----------------------");
+
+			_binaryReader.BaseStream.Seek (0, SeekOrigin.Begin);
+			Row tempRow = new Row ();
+
+			for (UInt64 i = 0; i < _numberOfRows; ++i) {
+				tempRow.Read (_binaryReader);
+
+				Console.WriteLine("(Position: {0}, Row: {1})", i, tempRow);
+			}
+
+			Console.WriteLine("-----------------------");
 		}
 	}
 }
