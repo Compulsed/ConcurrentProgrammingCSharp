@@ -97,9 +97,6 @@ namespace DSalter.ConcurrentUtils
 				try {
 					base.Offer (data);
 				} catch (ThreadInterruptedException) {
-
-					Console.WriteLine ("HERE");
-
 					maxResouces.ForceRelease ();
 					throw;
 				}

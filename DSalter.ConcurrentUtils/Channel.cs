@@ -65,11 +65,12 @@ namespace DSalter.ConcurrentUtils
 
 		/// <summary>
 		/// Continually tries to take data from the channel
+		/// 
+		/// TODO This function is buggy? Find out why
 		/// </summary>
 		public virtual T Take()
 		{
 			T data = default(T);
-
 
 			Boolean successful = false;
 			Boolean hasInterrupted = false;
@@ -127,7 +128,7 @@ namespace DSalter.ConcurrentUtils
 					}
 				}
 				catch (ThreadInterruptedException){
-					// We must release the token taken that we TryAcquired
+					// We must release the token taken that we TryAcquired to get here
 					itemsOnQueue.ForceRelease();
 					throw;
 				}
