@@ -46,7 +46,10 @@ namespace DatabaseManagementSystem
 
 		public void Print()
 		{
-			Console.WriteLine (_rowCache);
+			// Console.WriteLine (_rowCache);
+			foreach (Row row in _rowCache) {
+				
+			}
 		}
 
 		// Should interface with FileManager to get records that
