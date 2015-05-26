@@ -61,6 +61,14 @@ namespace DSalter.ConcurrentUtils
 			this.value = value;
 		}
 
+		public T GetValue ()
+		{
+			if (this == instance)
+				throw new Exception ("Cannot get the value of a NullNode");
+
+			return this.value;
+		}
+
 		public override string ToString ()
 		{
 			if (this == instance)
@@ -95,139 +103,76 @@ namespace DSalter.ConcurrentUtils
 			}
 		}
 	}
-
-	public class DoubleLinkedList<T> : IEnumerable
+		
+	public class LinkedQueue<T> 
 	{
 		public UInt64 Count { get; private set; }
 
-		Node<T> start = Node<T>.Instance; 
-		Node<T> end = Node<T>.Instance;	  
+		Node<T> front = Node<T>.Instance; 
+		Node<T> back = Node<T>.Instance;	  
 
-		Node<T> current = Node<T>.Instance;
+		protected Object EnqueueLock = new object ();
+		protected Object DequeueLock = new object ();
 
-		public DoubleLinkedList ()
+		public LinkedQueue ()
 		{
 			Count = 0;
 		}
 
-		public void Add (T value)
+		public void Enqueue (T value)
 		{
-			Node<T> newNode = new Node<T>(value);
+			lock (EnqueueLock){
+				lock (back) {
+					Node<T> newNode = new Node<T> (value);
 
-			if (Count == 0) {
-				start = newNode;
-				end = newNode;
-			} else {
-				// Point new node to the currents next, changes currents next to new node
-				newNode.SetNext(current.GetNext());
-				current.SetNext (newNode);
+					if (Count == 0) {
+						front = newNode;
+					} else {
+						newNode.SetPrevious (Node<T>.Instance); // There is no previous person
+						newNode.SetNext (back);  				// Person infront of you
+						back.SetPrevious (newNode);				// Person behind you, points to you
+					} 
 
-				// New nodes previous is the current node
-				newNode.SetPrevious(current);
+					back = newNode; 
 
-				if (!newNode.GetNext ().IsNullNode ())
-					newNode.GetNext ().SetPrevious (newNode);
-				else
-					end = newNode;
+					++Count;
+				}
 			}
-
-			// Current is now the new node
-			current = newNode;
-
-			++Count;
-		}
-
-		// --
-
-		public Node<T> GetCurrent ()
-		{
-			return current;
-		}
-
-		public void MoveNext ()
-		{
-			current = current.GetNext ();
-		}
-
-		public void MovePrevious ()
-		{
-			current = current.GetPrevious ();
-		}
-
-		// ---
-
-
-		public bool HasNext ()
-		{
-			return current.GetNext() != Node<T>.Instance;
-		}
-
-		public bool HasPrevious ()
-		{
-			return current.GetPrevious() != Node<T>.Instance;
-		}
-
-		public bool NotEnd ()
-		{
-			return current != Node<T>.Instance;
 		}
 			
-		public void ToStart ()
+
+		public T Dequeue ()
 		{
-			current = start;
-		}
+			lock (DequeueLock) {
+				lock (front) {
+					Node<T> toDetach;
 
-		public void ToEnd ()
-		{
-			current = end;
-		}
+					if (Count == 0)
+						throw new Exception ("Queue is empty");
 
-		// -- 
+					toDetach = front;  // Get the person at the front
 
-		public override string ToString ()
-		{
-			return String.Format(
-				"[Start: {0}, End: {1}, Current: {2}, Length: {3}]", start, end, current, Count
-			);
-		}
+					// Will be no more people in the queue
+					if (Count == 1) {
+						front = Node<T>.Instance;
+					} 
+					//  Will will be more people in the queue
+					else {
+						front = toDetach.GetPrevious (); // front will = previous
+						front.SetNext (Node<T>.Instance);
+					}
+				
+					--Count;
 
-		public IEnumerator GetEnumerator()
-		{
-			ToStart ();
-
-			Node<T> toPrint = current;	
-			while (!current.IsNullNode ()) {
-				toPrint = current;
-				MoveNext ();
-				yield return toPrint;
+					return toDetach.GetValue ();
+				}
 			}
 		}
 
 	}
 
-	public class ConcurrentQueue<T> 
-	{
-		public UInt64 Count { get; private set; }
+			
 
 
-
-		public ConcurrentQueue ()
-		{
-			Count = 0;
-		}
-
-
-
-		public void Enqueue(T item)
-		{
-		}
-
-		public T Dequeue()
-		{
-			return default(T);
-		}
-
-
-	}
 }
 
