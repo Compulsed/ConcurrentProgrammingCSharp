@@ -72,8 +72,11 @@ namespace DSalter.ConcurrentUtils
 			LS.Acquire();					// << ADDS READER TO LS
 
 			lock (lockObject) {
-				--readersWaiting;
-				Monitor.PulseAll(lockObject);
+				--readersWaiting; 
+
+				// If readers waiting then pulse 
+				if(readersWaiting != 0)
+					Monitor.Pulse(lockObject); 
 			}
 		}
 

@@ -44,23 +44,11 @@ namespace DSalter.ConcurrentUtils
 		/// This method gracefully handles Thread Interrupts
 		/// </summary>
 		/// <param name="data">The data to enqueue into the channel.</param>
+		/// 
+		/// Just calls offer with -1, think about the interrupt
 		public virtual void Put(T data)
 		{
-			Boolean successful = false;
-			Boolean hasInterrupted = false;
-
-			while (!successful) {
-				try {
-					successful = Offer(data);
-				} catch (ThreadInterruptedException){
-					hasInterrupted = true;
-				}
-			}
-				
-			if (hasInterrupted) {
-				Thread.CurrentThread.Interrupt ();
-			}
-
+				Offer(data, -1);
 		}
 
 		/// <summary>
@@ -72,20 +60,7 @@ namespace DSalter.ConcurrentUtils
 		{
 			T data = default(T);
 
-			Boolean successful = false;
-			Boolean hasInterrupted = false;
-
-			while (!successful) {
-				try {
-					successful = Poll (out data);
-				} 
-				catch (ThreadInterruptedException){
-					hasInterrupted = true;
-				}
-			}
-			if (hasInterrupted) {
-				Thread.CurrentThread.Interrupt ();
-			}
+			Poll (out data, -1); // Calls poll
 
 			return data;
 		}

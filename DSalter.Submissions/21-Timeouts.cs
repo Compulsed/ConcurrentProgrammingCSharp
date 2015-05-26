@@ -150,9 +150,11 @@ namespace DSalter.Submissions
 		{
 			Console.WriteLine("Inside timeout!");
 
-			// SemaphoreTest.TestWithATimeOut (3000);
+			SemaphoreTest.TestWithATimeOut (3000);
+			SemaphoreTest.TestWithATimeOut (-1);
+
 			// ChannelTest.TestOne();
-			BoundedChannelTest.TestOne();
+			// BoundedChannelTest.TestOne();
 
 			// TestUnlimitedWait ();
 

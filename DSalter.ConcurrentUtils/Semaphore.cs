@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Diagnostics;
 
 namespace DSalter.ConcurrentUtils
 {
@@ -103,16 +104,33 @@ namespace DSalter.ConcurrentUtils
 		/// <param name="timeout">Timeout time waiting in milliseconds</param>
 		public virtual bool TryAcquire(int timeout)
 		{
+			int waitTime = timeout;
+
 			lock (objectLock) {
 
 				threadsWaiting++;
 
+				Stopwatch stopWatch = new Stopwatch();
+				stopWatch.Start ();
+
 				while (_count == 0) {
 					try {
 						// Interrupt may occur here
-						if (!Monitor.Wait(objectLock, timeout)){
+						if(!Monitor.Wait(objectLock, waitTime)){
 							return false;
 						}
+
+						if ( _count == 0 && timeout != -1)
+						{
+							waitTime = timeout - (int)stopWatch.ElapsedMilliseconds;
+							// counter does not matter if -1 has been given
+							if ( waitTime < 0 ){
+								return false;
+							}
+						}
+
+
+
 					}
 					catch (ThreadInterruptedException){
 						lock (objectLock)

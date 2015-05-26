@@ -84,6 +84,8 @@ namespace DSalter.ConcurrentUtils
 			return data;
 		}
 
+		// lock, wait, sleep, join 
+
 		/// <summary>
 		/// Offer up the specified data to the queue, it may be interrupted
 		/// 
@@ -121,7 +123,7 @@ namespace DSalter.ConcurrentUtils
 			Boolean isSuccessful = base.Poll (out data, timeout);
 
 			if (isSuccessful) {
-				maxResouces.Release ();
+				maxResouces.Release (); // force release
 			}
 			return isSuccessful;
 		}
