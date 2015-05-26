@@ -34,7 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="21-Timeouts.cs" />
+    <Compile Include="23-ConcurrentQueue.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -58,6 +58,7 @@
     <None Include="12-ReaderWriterTest.cs" />
     <None Include="16-ConnectionManager.cs" />
     <None Include="17-Parallel.cs" />
+    <None Include="21-Timeouts.cs" />
     <None Include="22-HandleInterrupts.cs" />
   </ItemGroup>
   <ItemGroup>
