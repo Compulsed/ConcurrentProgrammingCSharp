@@ -16,13 +16,9 @@ namespace DSalter.Submissions
 			{
 
 				new Thread (() => {
-
-
 					Console.WriteLine("Attempting to Acquire");
 					noTokens.TryAcquire(-1);
 					Console.WriteLine("Acquired!");
-
-
 				}).Start ();
 
 			}
@@ -150,11 +146,11 @@ namespace DSalter.Submissions
 		{
 			Console.WriteLine("Inside timeout!");
 
-			SemaphoreTest.TestWithATimeOut (3000);
-			SemaphoreTest.TestWithATimeOut (-1);
+			// SemaphoreTest.TestWithATimeOut (3000);
+			// SemaphoreTest.TestWithATimeOut (-1);
 
 			// ChannelTest.TestOne();
-			// BoundedChannelTest.TestOne();
+			BoundedChannelTest.TestOne();
 
 			// TestUnlimitedWait ();
 

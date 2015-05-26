@@ -73,18 +73,18 @@ namespace DatabaseManagementSystem
 			// Always pass to the FileManager
 		//}
 
-		public void Execute (RandomRequest aRandomRequest)
+		public void Execute (Request aRequest)
 		{
 			// Console.WriteLine ("Table -> Sending aRandomRequest");
-			fileManagerChannel.Put (aRandomRequest);
+//			fileManagerChannel.Put (aRequest);
 		}
 
 		public void Execute(SelectRequest aSelectRequest)
 		{
 
-			for (UInt64 i = aSelectRequest.startId; i <= aSelectRequest.endId; ++i) {
-				Console.WriteLine (_rowCache [i]);
-			}
+//			for (UInt64 i = aSelectRequest.startId; i <= aSelectRequest.endId; ++i) {
+//				Console.WriteLine (_rowCache [i]);
+//			}
 
 			// Console.WriteLine ("Table -> Sending aSelectRequest");
 			// fileManagerChannel.Put (aSelectRequest);

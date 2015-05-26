@@ -28,8 +28,8 @@ namespace DatabaseManagementSystem
 				}
 
 				rr = RequestFactory.messageToRequest (inputText);
-				if(rr != null)
-					a.Execute ((dynamic)rr);
+//				if(rr != null)
+//					a.Execute ((dynamic)rr);
 
 			}
 
@@ -43,12 +43,12 @@ namespace DatabaseManagementSystem
 			TableManager a = new TableManager ("database.db");
 
 			Request rr = RequestFactory.messageToRequest ("r,2");
-			a.Execute((dynamic)rr);
+//			a.Execute((dynamic)rr);
 
 			Thread.Sleep (2000);
 
 			Request sr = RequestFactory.messageToRequest ("s,1,2");
-			a.Execute ((dynamic)sr);
+//			a.Execute ((dynamic)sr);
 		}
 
 		public static void Main (string[] args){

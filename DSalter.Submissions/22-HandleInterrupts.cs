@@ -18,21 +18,20 @@ namespace DSalter.Submissions
 
 
 				Thread One = new Thread (() => {
-					Console.WriteLine("Running Thread!");
-
 					try {
 						testSema.Acquire();
 					} 
-					catch (Exception){}
-
-					Console.WriteLine("HERE!");
+					catch (Exception e){
+						Console.WriteLine("testSema.Acquire() interuptCalled -> {0}", e.GetType());
+					}
 				});
 
 				One.Start ();
 
-				Thread.Sleep (1000);
-				One.Interrupt ();
+				Console.WriteLine ("Press any key to interrupt the Semaphore");
+				Console.ReadLine ();
 
+				One.Interrupt ();
 			}
 
 		}
@@ -46,19 +45,18 @@ namespace DSalter.Submissions
 			{
 
 				Thread One = new Thread (() => {
-					Console.WriteLine("Running Thread!");
-
 					string s = "";
 					try {
 						testChannel.Offer(s);
-					} catch (Exception) {}
-
-					Console.WriteLine("HERE!");
+					} catch (Exception e) {
+						Console.WriteLine("testChannel.Take() interuptCalled -> {0}", e.GetType());
+					}
 				});
-
 				One.Start ();
 
-				Thread.Sleep (1000);
+				Console.WriteLine ("Press any key to interrupt the Channel");
+				Console.ReadLine ();
+
 				One.Interrupt ();
 
 			}
@@ -68,9 +66,8 @@ namespace DSalter.Submissions
 
 		public static void Main()
 		{
-			// SemaphoreForceRelease.TestOne ();
+			SemaphoreForceRelease.TestOne ();
 			ChannelForceReleaser.TestOne ();
-
 
 			return;
 		}

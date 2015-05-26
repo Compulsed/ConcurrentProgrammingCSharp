@@ -24,6 +24,7 @@ namespace DSalter.Submissions
 			one.Start ();
 
 			while (true) {
+				Console.Write ("Enter For Channel to print\n~> ");
 				one._inputChannel.Put (Console.ReadLine ());
 			}
 		}

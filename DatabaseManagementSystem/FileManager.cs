@@ -92,29 +92,29 @@ namespace DatabaseManagementSystem
 
 
 
-		void ProcessRequest(RandomRequest aRandomRequest)
+		void ProcessRequest(Request aRandomRequest)
 		{
-			Console.WriteLine ("FileManager -> Processing aRandomRequest");
-
-
-			for(UInt64 i = 0; i < aRandomRequest.randomRowsToMake; ++i){
-				UInt64 thisRowId = _idOfNextRow++;
-				++_numberOfRows;
-
-				Row rowToBeAdded = new Row (thisRowId, "R -> " + thisRowId);
-
-				Console.WriteLine (rowToBeAdded);
-
-				_rowCache.Add (thisRowId, rowToBeAdded);
-
-				rowToBeAdded.Write(_binaryWriter);
-
-				aRandomRequest.resultSet._rowObjectsCompleted.Add (rowToBeAdded);
-				aRandomRequest.resultSet._completedLatch.Release ();
-			}
-
-			PrintKeyValue ();
-			PrintFile ();
+//			Console.WriteLine ("FileManager -> Processing aRandomRequest");
+//
+//
+//			for(UInt64 i = 0; i < aRandomRequest.randomRowsToMake; ++i){
+//				UInt64 thisRowId = _idOfNextRow++;
+//				++_numberOfRows;
+//
+//				Row rowToBeAdded = new Row (thisRowId, "R -> " + thisRowId);
+//
+//				Console.WriteLine (rowToBeAdded);
+//
+//				_rowCache.Add (thisRowId, rowToBeAdded);
+//
+//				rowToBeAdded.Write(_binaryWriter);
+//
+//				aRandomRequest.resultSet._rowObjectsCompleted.Add (rowToBeAdded);
+//				aRandomRequest.resultSet._completedLatch.Release ();
+//			}
+//
+//			PrintKeyValue ();
+//			PrintFile ();
 		}
 
 

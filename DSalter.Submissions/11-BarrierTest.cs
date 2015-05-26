@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using DSalter.ConcurrentUtils;
 
 using Thread = System.Threading.Thread;

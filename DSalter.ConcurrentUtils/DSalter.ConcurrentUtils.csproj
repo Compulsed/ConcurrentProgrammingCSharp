@@ -48,7 +48,6 @@
     <Compile Include="ChannelActiveObject.cs" />
     <Compile Include="ConnectionManager.cs" />
     <Compile Include="MessageEchoer.cs" />
-    <Compile Include="ConcurrentQueue.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

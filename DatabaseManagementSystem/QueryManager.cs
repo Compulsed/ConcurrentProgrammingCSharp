@@ -12,20 +12,45 @@ using System.Linq;
 namespace DatabaseManagementSystem
 {
 
-	public abstract class Request 
+	public class Request : IRequest
 	{
+		private static Request invalidRequest = null; 	// Signifies the request is not yet valid
 		public ResultSet resultSet;
+
 
 		public Request(UInt64 randomRowsToMake)
 		{
 			resultSet = new ResultSet (new List<Row> ((int)randomRowsToMake));
 		}
+			
+
+		public virtual void Validate(){}
+		public virtual void Execute(){}
+
 
 		public ResultSet ResulltSet {
 			get {
 				return resultSet;
 			}
 		}
+
+
+		private Request() {}
+		public static Request InvalidRequest
+		{
+			get 
+			{
+				if (invalidRequest == null)
+					invalidRequest = new Request ();
+
+				return invalidRequest;
+			}
+		}
+	}
+
+	public interface IRequest {
+		void Validate ();
+		void Execute ();
 	}
 
 
@@ -55,6 +80,10 @@ namespace DatabaseManagementSystem
 			base.resultSet._rowObjectsCompleted = new List<Row> ();
 		}
 
+		public override void Validate(){}
+		public override void Execute(){}
+
+
 		public UInt64 RandomRowsToMake {
 			get {
 				return randomRowsToMake;
@@ -74,6 +103,9 @@ namespace DatabaseManagementSystem
 
 			base.ResulltSet._rowObjectsCompleted = new List<Row> ();
 		}
+
+		public override void Validate(){}
+		public override void Execute(){}
 	}
 
 

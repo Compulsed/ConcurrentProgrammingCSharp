@@ -36,17 +36,17 @@ namespace DSalter.Submissions
 			Console.WriteLine ("Starting Write()");
 
 			while (true) {
-				Thread.Sleep (1000);
+
 
 				writePermission.Acquire ();
 				{
-					Console.Write (Thread.CurrentThread.Name + ": ");
-					for (int i = 0; i < 10; ++i)
-						Console.Write (i + " ");
-					Console.WriteLine ("");
+					Console.WriteLine (Thread.CurrentThread.Name);
+					Thread.Sleep (1000);
 				}
 				writePermission.Release ();
+
 			}
+
 		}
 
 		// Logic - Only one of the three threads can write at a time

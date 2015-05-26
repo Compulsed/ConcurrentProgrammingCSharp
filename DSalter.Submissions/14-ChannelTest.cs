@@ -82,7 +82,8 @@ namespace DSalter.Submissions
 
 		public static void Main()
 		{
-			// TestOne ();
+			TestOne ();
+			// 
 			TestTwo	();
 
 			return;
