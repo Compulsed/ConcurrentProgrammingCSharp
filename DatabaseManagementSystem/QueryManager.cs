@@ -12,28 +12,22 @@ using System.Linq;
 namespace DatabaseManagementSystem
 {
 
+	public interface IRequest {
+		void Execute ();
+	}
+
 	public class Request : IRequest
 	{
 		private static Request invalidRequest = null; 	// Signifies the request is not yet valid
-		public ResultSet resultSet;
+		public ResultSet ResultSet { get; set; }
 
 
 		public Request(UInt64 randomRowsToMake)
 		{
-			resultSet = new ResultSet (new List<Row> ((int)randomRowsToMake));
+			ResultSet = new ResultSet (new List<Row> ((int)randomRowsToMake));
 		}
 			
-
-		public virtual void Validate(){}
 		public virtual void Execute(){}
-
-
-		public ResultSet ResulltSet {
-			get {
-				return resultSet;
-			}
-		}
-
 
 		private Request() {}
 		public static Request InvalidRequest
@@ -48,10 +42,7 @@ namespace DatabaseManagementSystem
 		}
 	}
 
-	public interface IRequest {
-		void Validate ();
-		void Execute ();
-	}
+
 
 
 	/*public class CreateRequest : Request 
@@ -77,10 +68,9 @@ namespace DatabaseManagementSystem
 		public RandomRequest(UInt64 randomRowsToMake) : base(randomRowsToMake)
 		{
 			this.randomRowsToMake = randomRowsToMake;
-			base.resultSet._rowObjectsCompleted = new List<Row> ();
+			base.ResultSet._rowObjectsCompleted = new List<Row> ();
 		}
 
-		public override void Validate(){}
 		public override void Execute(){}
 
 
@@ -101,10 +91,9 @@ namespace DatabaseManagementSystem
 			this.startId = start;
 			this.endId = end;
 
-			base.ResulltSet._rowObjectsCompleted = new List<Row> ();
+			//base.ResulltSet._rowObjectsCompleted = new List<Row> ();
 		}
 
-		public override void Validate(){}
 		public override void Execute(){}
 	}
 

@@ -40,6 +40,7 @@ namespace DatabaseManagementSystem
 	/// </summary>
 	public class FileManager : ChannelActiveObject<Request>
 	{
+		private static FileManager instance = null; 	// Signifies the request is not yet valid
 
 		// Binary, each row takes a fixed no bytes
 		// Strings are to be fixed size
@@ -91,6 +92,27 @@ namespace DatabaseManagementSystem
 
 
 
+		public void CreateRandomRows (UInt64 rowsToMake)
+		{
+			for(UInt64 i = 0; i < rowsToMake; ++i){
+				UInt64 thisRowId = _idOfNextRow++;
+				++_numberOfRows;
+
+				Row rowToBeAdded = new Row (thisRowId, "R -> " + thisRowId);
+
+				Console.WriteLine (rowToBeAdded);
+
+				_rowCache.Add (thisRowId, rowToBeAdded);
+
+				rowToBeAdded.Write(_binaryWriter);
+
+				// aRandomRequest.resultSet._rowObjectsCompleted.Add (rowToBeAdded);
+				// aRandomRequest.resultSet._completedLatch.Release ();
+			}
+
+			PrintKeyValue ();
+			PrintFile ();
+		}
 
 		void ProcessRequest(Request aRandomRequest)
 		{
@@ -126,7 +148,7 @@ namespace DatabaseManagementSystem
 		protected override void Process (Request passedData)
 		{
 
-			ProcessRequest ((dynamic)passedData);
+			// ProcessRequest ((dynamic)passedData);
 
 			// If Reading, check that it is not already in the cache
 			// if it is, add to the ResultSet, if not fetch from file
@@ -173,6 +195,17 @@ namespace DatabaseManagementSystem
 			}
 
 			Console.WriteLine("-----------------------");
+		}
+
+		public static FileManager Instance
+		{
+			get 
+			{
+				if (instance == null)
+					instance = new FileManager (new Dictionary<UInt64, Row>(), "test.db");
+
+				return instance;
+			}
 		}
 	}
 }
