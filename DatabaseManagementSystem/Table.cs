@@ -39,9 +39,9 @@ namespace DatabaseManagementSystem
 		{
 			_rowCache = new Dictionary<UInt64, Row> ();
 
-			fileManager = new FileManager (_rowCache, fileName);
-			fileManagerChannel = fileManager._inputChannel;
-			fileManager.Start ();
+			//fileManager = new FileManager (_rowCache, fileName);
+			//fileManagerChannel = fileManager._inputChannel;
+			//fileManager.Start ();
 		}
 
 		public void Print()
