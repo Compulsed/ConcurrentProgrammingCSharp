@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using DSalter.ConcurrentUtils;
 
 namespace DatabaseManagementSystem
@@ -24,72 +24,72 @@ namespace DatabaseManagementSystem
 	///
 	/// 
 	/// Handles the FileManager
-	/// 
+	/// -
 	/// </summary>
 	public class Table
 	{
-		// Stores the actual representation of the file
-		FileManager fileManager;
-		Channel<Request> fileManagerChannel;
+		private FileManager _fileManager = FileManager.Instance;
+	    private Channel<Request> _fileManagerChannel = null;
+
 
 		// Key: Row ID, Value: Row is cache
-		Dictionary<UInt64, Row> _rowCache; 
+		public static Dictionary<UInt64, WrRow> _rowCache = new Dictionary<UInt64, WrRow>(); 
 
-		public Table (string fileName = "tablename.db")
+		public Table (string fileName = "database.db", bool newDatabase = true)
 		{
-			_rowCache = new Dictionary<UInt64, Row> ();
+		    FileManager.Instance.InitializeDatabase(_rowCache, fileName, newDatabase);
+            _fileManagerChannel = _fileManager._inputChannel;
+            _fileManager.Start ();
+        }  
 
-			//fileManager = new FileManager (_rowCache, fileName);
-			//fileManagerChannel = fileManager._inputChannel;
-			//fileManager.Start ();
-		}
+        // BUG: Does not remove the rows to operate on, hence doubling data on cache hit
+	    private bool HandleSelect(Request aSelectRequest)
+	    {
+	        List<Row> rowsToOperateOn = aSelectRequest.GetOperationRows();
+	        UInt64 numberOfRowsToCheck = (UInt64)rowsToOperateOn.Count;
 
-		public void Print()
-		{
-			// Console.WriteLine (_rowCache);
-			//
-			//	foreach (Row row in _rowCache) {
-			//	
-			//	}
+            HashSet<Row> rowsToRemove = new HashSet<Row>();
 
-			Console.WriteLine("-----------------------");
-			foreach (KeyValuePair<UInt64, Row> entry in _rowCache)
-				Console.WriteLine ("{0} : {1}", entry.Key, entry.Value);
-			Console.WriteLine("-----------------------");
-		}
 
-		// Should interface with FileManager to get records that
-		// are not within this cache
-		// If can get from cache, set the status and latch
-		// if not let the FileManager deal with it
-		void Read(Request aReadReqest)
-		{
-			// pass request to channel if not cached
-			// if cached handle and set latch and status
-		}
+            for (UInt64 i = 0; i < numberOfRowsToCheck; ++i)
+            { 
+                if ( _rowCache.ContainsKey(rowsToOperateOn[(int)i].RowId ))
+	            {
+	                Row tempRow = _rowCache[rowsToOperateOn[(int) i].RowId].CacheValue();
 
-		// void Update(Request aUpdateRequest)
-		// {
-			// Always pass to the FileManager
-		//}
+	                if (tempRow != null)
+	                {
+                        Console.WriteLine("Cache HIT! {0}", tempRow);
 
-		public void Execute (Request aRequest)
-		{
-			// Console.WriteLine ("Table -> Sending aRandomRequest");
-//			fileManagerChannel.Put (aRequest);
-		}
+                        rowsToRemove.Add(tempRow);
+                        aSelectRequest.AddRow(tempRow);
+                    }
+	            }
+	        }
 
-		public void Execute(SelectRequest aSelectRequest)
-		{
+	        foreach (Row row in rowsToRemove) // PROBLEM
+	            rowsToOperateOn.Remove(row);
 
-//			for (UInt64 i = aSelectRequest.startId; i <= aSelectRequest.endId; ++i) {
-//				Console.WriteLine (_rowCache [i]);
-//			}
+            // They were all in the cache
+	        return aSelectRequest.GetOperationRows().Count == 0;
+	    }
 
-			// Console.WriteLine ("Table -> Sending aSelectRequest");
-			// fileManagerChannel.Put (aSelectRequest);
-		}
+        public void Accept(Request aRequest)
+	    {
+            Console.WriteLine($"TB: {aRequest}");
 
+            if (aRequest.RequestType == RequestType.Read)
+            {
+                // They were all in the cache
+                if (HandleSelect(aRequest))
+                {
+                    aRequest.Unlock(OperationStatus.Completed);
+                    return;
+                }
+            }
+
+            _fileManagerChannel.Put(aRequest);
+        }
 	}
 }
 

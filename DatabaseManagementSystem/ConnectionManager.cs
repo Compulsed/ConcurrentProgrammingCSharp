@@ -101,6 +101,30 @@ namespace DSalter.ConcurrentUtils
 
 		}
 
+	    private void WelcomeMessage(Socket client)
+	    {
+            ConnectionWithMessage newClient = new ConnectionWithMessage(client);
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine("--------------------------------------------------");
+            sb.AppendLine("WELCOME! TO Dale Salter's Database Server");
+	        sb.AppendLine("--------------------------------------------------");
+	        sb.AppendLine();
+	        sb.AppendLine("To Create:\t c,<Your data>");
+	        sb.AppendLine("To Delete:\t d,<RowId>");
+	        sb.AppendLine("To Select:\t s,<Start Range>-<End Range>");
+	        sb.AppendLine("To Update:\t u,<RowId>:<New Data>");
+	        sb.AppendLine("To Random:\t r,<Records to random>");
+            sb.AppendLine();
+            sb.AppendLine();
+            sb.Append("~> ");
+
+
+            newClient.writer.Write(sb.ToString());
+            newClient.writer.Flush();
+        }
+
 		protected override void Run ()
 		{
 			Console.WriteLine ("Now accepting connections");
@@ -120,10 +144,12 @@ namespace DSalter.ConcurrentUtils
 					socketListCopy.Remove (_mainSocket);
 
 					Console.WriteLine ("Established a new connection with: {0}", ((IPEndPoint)client.RemoteEndPoint).ToString ());
+
+                    WelcomeMessage(client);
 				}
 
 
-				foreach (Socket client in socketListCopy) {
+                foreach (Socket client in socketListCopy) {
 
 					// If there in no data on the socket, but something has changed on the socket state, it has been disconnected
 					if (client.Available == 0) {
@@ -132,9 +158,6 @@ namespace DSalter.ConcurrentUtils
 						_socketList.Remove (client);
 					}
 					else {
-						// How can I deatch this?
-						// Must do the reading on this thread or bugs will happen
-
 						_outputChannel.Put (new ConnectionWithMessage (client));
 					}
 				}

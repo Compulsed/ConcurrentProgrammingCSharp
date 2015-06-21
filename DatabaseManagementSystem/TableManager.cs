@@ -3,47 +3,21 @@ using System.Collections.Generic;
 
 namespace DatabaseManagementSystem
 {
-
-	/// <summary>
-	/// Table manager.
-	///
-	/// Must contain
-	/// - A cache of the table and the rows that have been loaded
-	/// 
-	/// 
-	/// 
-	/// Uses file manager to do the do the actual reading and writing
-	/// 	to the file
-	/// 
-	/// CRUD Requests will be sent here
-	/// 
-	/// Concept of "Action type"
-	/// 
-	/// </summary>
-
 	public class TableManager 
 	{
+		private Table _mainTable;  
 
-		Table mainTable; 
 
-		public TableManager (string fileName = "database.db")
+		public TableManager (string fileName = "database.db", bool newDatabase = true)
 		{
-			mainTable = new Table (fileName);
+			_mainTable = new Table (fileName, newDatabase);
 		}
 
-
-		public void Request(Request aRequest)
+		public void Accept(Request aRequest)
 		{
-			// Console.WriteLine ("Random request sent!");
-			// mainTable.Execute (aRequest);
+            Console.WriteLine($"TM: {aRequest}");
+		    _mainTable.Accept(aRequest);
 		}
-
-
-
-		// public void Execute (UpdateRequest aUpdateRequest)
-		//{
-		// 	Console.WriteLine ("Update request sent!");
-		// }
-	}
+    }
 }
 

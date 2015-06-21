@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using DSalter.ConcurrentUtils;
 
@@ -42,35 +43,16 @@ namespace DatabaseManagementSystem
     ///         // Loccation of first free space? // #2
     /// </summary>
 
-    // TODO: Probably a smarter way of doing configuration
-    public static class Configuration
-    {
-        // Format: Last Row ID
-        public static UInt64 IdOfNextRow = 0; // TODO: This is public and I am lazy
-
-        public static void SaveFileManager(FileManager aFileManager)
-        {}
-
-        public static void LoadFileManager(Dictionary<UInt64, Row> rowCache, string fileName)
-        {
-            FileManager.Instance.InitializeDatabase(rowCache, fileName, false);
-        }
-
-        public static FileManager EmptyFileManager(Dictionary<UInt64, Row> rowCache, string fileName)
-        {
-            FileManager.Instance.InitializeDatabase(rowCache, fileName, true);
-
-            return FileManager.Instance;
-        }
-    }
-
     public class FileManager : ChannelActiveObject<Request>
 	{
 		private static FileManager _instance = null;
         private const UInt64 INCREASE_DATABASE_BY = 100;
+        private const double DATABASE_EXPANDER = 2;
+        private Random rand = new Random(Guid.NewGuid().GetHashCode());
+
 
         // Given Row ID, contains the actual row
-		private Dictionary<UInt64, Row> _rowCache = null;
+        private Dictionary<UInt64, WrRow> _rowCache = null;
 
         // Given Row ID, contains location within the file
         private Dictionary<UInt64, UInt64> _rowLocationInFile = null;
@@ -82,7 +64,7 @@ namespace DatabaseManagementSystem
         private UInt64 _currentDatabaseCapacity = 0;    // The size amount of space the current database has, can be resized
 		private UInt64 _noActiveRows = 0;               // The amount of active rows in the file
 
-        private string _fileName = "DefaultDatabase.db";
+        private string _fileName = "database.db";
 
         private FileStream _databaseFile = null;
 		private BinaryWriter _binaryWriter = null;
@@ -120,7 +102,7 @@ namespace DatabaseManagementSystem
         }
 
         // For configuration data to be valid, must be called from the Configuration.LoadFileManager TODO: This is yuk
-        public void InitializeDatabase(Dictionary<UInt64, Row> rowCache, string fileName, bool newDatabase = true)
+        public void InitializeDatabase(Dictionary<UInt64, WrRow> rowCache, string fileName, bool newDatabase = true)
         {
             _fileName = fileName;
 
@@ -142,35 +124,211 @@ namespace DatabaseManagementSystem
             }
             else
             {
+                StreamReader sr = new StreamReader(FileName + ".cfg");
+                ConfigurationReader(sr);
+                sr.Close();
+
                 _databaseFile = new FileStream(_fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
                 _binaryReader = new BinaryReader(_databaseFile, System.Text.Encoding.Unicode);
                 _binaryWriter = new BinaryWriter(_databaseFile, System.Text.Encoding.Unicode);
-
-                // We CAN rebuild indexes
-                // _idOfNextRow = Configuration.IdOfNextRow;
-
-                // Tuple<Dictionary<ulong, ulong>, SortedSet<ulong>> rowLocationsInFile = BuildRowLocationsFromFile();
-                // _rowLocationInFile = rowLocationsInFile.Item1;
-                // _freeFilePositions = rowLocationsInFile.Item2;
-
-                // _rowCache = BuildRowCacheFromFile(_rowCache);
 
                 Console.WriteLine("Loaded Database: {0}", _fileName);
             }
         }
 
-        public void FillCache()
+        //---------------------------------------------------------------------
+        //          : Processors
+        //---------------------------------------------------------------------
+        private void HandleRandom(Request randomRequest)
         {
-            _rowCache = BuildRowCacheFromFile(_rowCache);
+            while (randomRequest.NumberOfRowsLeft() != 0)
+            {
+                randomRequest.RemoveRow();
+
+                randomRequest.AddRow(CreateRandomRow());
+            }
+
+            randomRequest.Unlock(OperationStatus.Completed);
         }
 
-        public void EmptryCache()
+        private void HandleCreate(Request aCreateRequest)
         {
-            foreach (var key in _rowCache.Keys.ToList())
-                _rowCache[key] = null;
+            Row rowToCreate = aCreateRequest.RemoveRow();
+
+            rowToCreate.RowId = GetNewId();
+
+            InsertRow(rowToCreate);
+            aCreateRequest.AddRow(rowToCreate);
+
+            aCreateRequest.Unlock(OperationStatus.Completed);
         }
 
-        public void InsertRowInEmptyPlace(Row rowToInsert)
+        // BUG: Does not remove the rows to operate on, hence doubling data on cache hit
+        private void HandleSelect(Request aSelectRequest)
+        { 
+            List<Row> rowsToOperateOn = aSelectRequest.GetOperationRows();
+            UInt64 numberOfRowsToCheck = (UInt64)rowsToOperateOn.Count;
+
+            HashSet<Row> rowsToRemove = new HashSet<Row>();
+
+            for (UInt64 i = 0; i < numberOfRowsToCheck; ++i)
+            {
+                Row tempRow = GetRowByIndex(rowsToOperateOn[(int)i].RowId);
+
+                if (tempRow != null)
+                {
+                    rowsToRemove.Add(tempRow);
+                    aSelectRequest.AddRow(tempRow);
+                }
+               
+            }
+
+            foreach (Row row in rowsToRemove)
+                rowsToOperateOn.Remove(row);
+
+
+            aSelectRequest.Unlock(aSelectRequest.GetOperationRows().Count == 0
+                ? OperationStatus.Completed
+                : OperationStatus.Partial);
+        }
+
+        private void HandleUpdate(Request aUpdateRequest)
+        {
+            Row newRow = aUpdateRequest.GetOperationRows()[0];
+
+
+            if (UpdateRow(newRow))
+            {
+                aUpdateRequest.AddRow(newRow);
+                aUpdateRequest.Unlock(OperationStatus.Completed);
+            }
+            else
+            {
+                aUpdateRequest.Unlock(OperationStatus.Failed);
+            }
+        }
+
+        private void HandleDelete(Request aDeleteRequest)
+        {
+            Row rowToDelete = aDeleteRequest.RemoveRow();
+
+            rowToDelete = DeleteRowByIndex(rowToDelete.RowId);
+
+            if (rowToDelete != null)
+            {
+                aDeleteRequest.AddRow(rowToDelete);
+
+                aDeleteRequest.Unlock(OperationStatus.Completed);
+            }
+            else
+            {
+                aDeleteRequest.Unlock(OperationStatus.Failed);
+            }
+        }
+
+
+        protected override void Process(Request aRequest)
+        {
+            Console.WriteLine($"FM: {aRequest}");
+
+            switch (aRequest.RequestType)
+            {
+                case RequestType.Random:
+                {
+                    HandleRandom(aRequest);
+                    break;
+                }
+
+                case RequestType.Write:
+                {
+                    HandleCreate(aRequest);
+                    break;
+                }
+
+                case RequestType.Read:
+                {
+                    HandleSelect(aRequest);
+                    break;
+                }
+
+                case RequestType.Update:
+                {
+                    HandleUpdate(aRequest);
+                    break;
+                }
+
+                case RequestType.Delete:
+                {
+                    HandleDelete(aRequest);
+                    break;
+                }
+
+                default:
+                {
+                    Console.WriteLine($"FM - Unable to process {aRequest} at the moment");
+                    break;
+                }
+                
+            }
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine(Statistics());
+            Console.ResetColor();
+        }
+
+        //---------------------------------------------------------------------
+        //          : CRUD OPERATIONS
+        //---------------------------------------------------------------------
+        public Row GetRowByIndex(UInt64 rowIndex)
+        {
+            if (_rowCache.ContainsKey(rowIndex))
+            {
+                return _rowCache[rowIndex].GetRow();
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public Row DeleteRowByIndex(UInt64 rowIndex)
+        {
+            Row deletedRow = null;
+
+            if (_rowCache.ContainsKey(rowIndex))
+            {
+                deletedRow = _rowCache[rowIndex].GetRow();
+
+                _freeFilePositions.Add(_rowLocationInFile[rowIndex]);
+                _rowCache[rowIndex].GetRow().Delete(_binaryWriter, _rowLocationInFile);
+                _rowCache.Remove(rowIndex);
+
+                --_noActiveRows;
+            }
+
+            return deletedRow;
+        }
+
+
+        public bool UpdateRow(Row aRow)
+        {
+            // Get the ID of the aRow
+            UInt64 id = aRow.RowId;
+
+            if (!_rowCache.ContainsKey(id))
+                return false;
+
+            // Update the cache pointer
+            _rowCache[id] = new WrRow(aRow);
+
+            // Change the value in the file
+            _binaryWriter.BaseStream.Seek((long)(Row.ByteSize() * _rowLocationInFile[id]), SeekOrigin.Begin);
+            aRow.Write(_binaryWriter);
+
+            return true;
+        }
+
+        public void InsertRow(Row rowToInsert)
         {
             UInt64 locationToInsertAt;
 
@@ -181,15 +339,19 @@ namespace DatabaseManagementSystem
             catch (Exception)
             {
                 // Make more space
-                Console.WriteLine("Making more space!");
+                // Console.WriteLine("Making more space!");
 
-                _binaryWriter.BaseStream.SetLength((long)INCREASE_DATABASE_BY * (long)Row.ByteSize() + _binaryWriter.BaseStream.Length);
+                long oldCapacity = (long)_currentDatabaseCapacity;
+                long newFileCapacity = (long)((_currentDatabaseCapacity + INCREASE_DATABASE_BY) * DATABASE_EXPANDER);
 
-                for (UInt64 i = 0; i < INCREASE_DATABASE_BY; ++i)
+                _binaryWriter.BaseStream.SetLength((long)Row.ByteSize() * newFileCapacity);
+
+                long changeInCapacity = newFileCapacity - oldCapacity;
+                for (long i = 0; i < changeInCapacity; ++i)
                 {
-                    _freeFilePositions.Add(_currentDatabaseCapacity + i);
+                    _freeFilePositions.Add((UInt64)(oldCapacity + i));
                 }
-                _currentDatabaseCapacity += INCREASE_DATABASE_BY;
+                _currentDatabaseCapacity = (UInt64)newFileCapacity;
 
                 locationToInsertAt = _freeFilePositions.First();
             }
@@ -198,7 +360,7 @@ namespace DatabaseManagementSystem
             _freeFilePositions.Remove(locationToInsertAt);
 
             // Add the new row to the cache
-            _rowCache.Add(rowToInsert.RowId, rowToInsert);
+            _rowCache.Add(rowToInsert.RowId, new WrRow(rowToInsert));
 
             // Add the new row id and this location in the file it is at
             _rowLocationInFile.Add(rowToInsert.RowId, locationToInsertAt);
@@ -210,15 +372,95 @@ namespace DatabaseManagementSystem
             ++_noActiveRows;
         }
 
-
-
-        public void CreateRandomRows()
+        //---------------------------------------------------------------------
+        //          : THINGS THAT USE CRUD OPERATIONS
+        //---------------------------------------------------------------------
+        public void DeleteRandomRows()
         {
-                UInt64 thisRowId = _idOfNextRow++; // TODO: Probably should not be here, but inside function
+            UInt64 rowIndex = 0;
+            bool found = false;
 
-                InsertRowInEmptyPlace(new Row(thisRowId, "R -> " + thisRowId));            
+            foreach (KeyValuePair<UInt64, UInt64> entry in _rowLocationInFile)
+            {
+                Console.WriteLine("Row Index: {0}, Position In File {1})", entry.Key, entry.Value);
+                rowIndex = entry.Key;
+
+                found = true;
+
+                break;
+            }
+
+            if (found)
+            {
+                Row rowToRemove = _rowCache[rowIndex].GetRow();
+                _rowCache.Remove(rowIndex); // Remove it from the cache
+
+                rowToRemove.SetStatus(RowStatus.Deleted);
+
+                // Write the deleted record back to file
+                _binaryWriter.BaseStream.Seek((long)(Row.ByteSize() * _rowLocationInFile[rowIndex]), SeekOrigin.Begin);
+
+                rowToRemove.Write(_binaryWriter);
+
+                // Add the deleted space for later additions
+                _freeFilePositions.Add(_rowLocationInFile[rowIndex]);
+
+                // Remove from valid locations
+                _rowLocationInFile.Remove(rowIndex);
+
+                --_noActiveRows;
+            }
+            else
+            {
+                Console.WriteLine("No more rows left to delete!");
+            }
         }
 
+        public Row CreateRandomRow()
+        {
+            UInt64 thisRowId = GetNewId();
+
+            Row newRow = new Row(thisRowId, "Random Row with this row Id -> " + thisRowId);
+
+            InsertRow(newRow);
+
+            return newRow;
+        }
+
+
+        public void UpdateRandomRow(UInt64 amountToRandom)
+        {
+            for (UInt64 i = 0; i < amountToRandom; ++i)
+            {
+                Row toBeUpdated = _rowCache.ElementAt(rand.Next(0, _rowCache.Count)).Value.GetRow();
+                Row newRow = new Row(toBeUpdated.RowId, DateTime.Now.ToString("MM\\/dd\\/yyyy h\\:mm tt"));
+                UpdateRow(newRow);
+            }
+        }
+
+
+        //---------------------------------------------------------------------
+        //          : Helpers
+        //---------------------------------------------------------------------
+        public UInt64 GetNewId()
+        {
+            return _idOfNextRow++;
+        }
+
+        //---------------------------------------------------------------------
+        //          : Building Indexes
+        //---------------------------------------------------------------------
+        public void Rebuild()
+        {
+            // We CAN rebuild indexes
+            // _idOfNextRow = Configuration.IdOfNextRow;
+
+            // Tuple<Dictionary<ulong, ulong>, SortedSet<ulong>> rowLocationsInFile = BuildRowLocationsFromFile();
+            // _rowLocationInFile = rowLocationsInFile.Item1;
+            // _freeFilePositions = rowLocationsInFile.Item2;
+
+            // _rowCache = BuildRowCacheFromFile(_rowCache);
+        }
 
         public Tuple<Dictionary<ulong, ulong>, SortedSet<UInt64>> BuildRowLocationsFromFile()
         {
@@ -249,7 +491,7 @@ namespace DatabaseManagementSystem
             return new Tuple<Dictionary<ulong, ulong>, SortedSet<ulong>>(builtRowLocations, freeRowLocations);
         }
 
-        public Dictionary<UInt64, Row> BuildRowCacheFromFile(Dictionary<UInt64, Row> rowCache)
+        public Dictionary<UInt64, WrRow> BuildRowCacheFromFile(Dictionary<UInt64, WrRow> rowCache)
         {
             _binaryReader.BaseStream.Seek(0, SeekOrigin.Begin);
 
@@ -262,11 +504,11 @@ namespace DatabaseManagementSystem
                 {
                     if (rowCache.ContainsKey(tempRow.RowId))
                     {
-                        rowCache[tempRow.RowId] = tempRow;
+                        rowCache[tempRow.RowId] = new WrRow(tempRow);
                     }
                     else
                     {
-                        rowCache.Add(tempRow.RowId, tempRow); // TODO: Do not add in the row, maybe save the row cache on exit
+                        rowCache.Add(tempRow.RowId, new WrRow(tempRow)); // TODO: Do not add in the row, maybe save the row cache on exit
                     }
                 }
             }
@@ -274,84 +516,66 @@ namespace DatabaseManagementSystem
             return rowCache;
         }
 
-        public void DeleteRandomRows()
+
+        // MAY CAUSE BUG: What if Key values are not returned in the right order...? or if the order changes...
+        public Dictionary<UInt64, WrRow> BuildRowCacheFromRowOffset(Dictionary<UInt64, WrRow> rowCache)
         {
-            UInt64 rowIndex = 0;
-            bool found = false;
+            _binaryReader.BaseStream.Seek(0, SeekOrigin.Begin);
+
+            long currentOffset = 0;
 
             foreach (KeyValuePair<UInt64, UInt64> entry in _rowLocationInFile)
-            { 
-                Console.WriteLine("Row Index: {0}, Position In File {1})", entry.Key, entry.Value);
-                rowIndex = entry.Key;
-
-                found = true;
-
-                break;
-            }
-
-            if (found)
             {
-                Row rowToRemove = _rowCache[rowIndex];
-                _rowCache.Remove(rowIndex); // Remove it from the cache
-                
-                rowToRemove.SetStatus(RowStatus.Deleted);
+                long seekDelta = (long)entry.Value - currentOffset;
 
-                // Write the deleted record back to file
-                _binaryWriter.BaseStream.Seek((long)(Row.ByteSize() * _rowLocationInFile[rowIndex]), SeekOrigin.Begin);
+                _binaryReader.BaseStream.Seek(seekDelta, SeekOrigin.Current);
 
-                rowToRemove.Write(_binaryWriter);
+                Row tempRow = new Row();
+                tempRow.Read(_binaryReader);
 
-                // Add the deleted space for later additions
-                _freeFilePositions.Add(_rowLocationInFile[rowIndex]);
+                if (tempRow.IsActive())
+                {
+                    if (rowCache.ContainsKey(tempRow.RowId))
+                    {
+                        rowCache[tempRow.RowId] = new WrRow(tempRow);
+                    }
+                    else
+                    {
+                        rowCache.Add(tempRow.RowId, new WrRow(tempRow)); // TODO: Do not add in the row, maybe save the row cache on exit
+                    }
+                }
 
-                // Remove from valid locations
-                _rowLocationInFile.Remove(rowIndex);
-
-                --_noActiveRows;
+                currentOffset = (long)entry.Value;
             }
-            else
-            {
-                Console.WriteLine("No more rows left to delete!");
-            }
+
+            return rowCache;
         }
 
 
-		void ProcessRequest(Request aRandomRequest){}
+        public void FillCache(bool fromFile = false)
+        {
+            if (fromFile)
+                _rowCache = BuildRowCacheFromFile(_rowCache);
+            else
+                _rowCache = BuildRowCacheFromRowOffset(_rowCache);
+        }
 
+        public void EmptyCache()
+        {
+            foreach (var key in _rowCache.Keys.ToList())
+                _rowCache[key].Empty();
+        }
 
-		void ProcessRequest(SelectRequest aSelectRequest)
-		{
-			Console.WriteLine ("FileManager -> Processing aSelectRequest");
-		}
+        //---------------------------------------------------------------------
+        //          : Save / Load Indexes
+        //---------------------------------------------------------------------
+        public void Save()
+        {
+            StreamWriter sw = new StreamWriter(FileName + ".cfg");
+            ConfigurationWriter(sw);
+            sw.Close();
+        }
 
-		protected override void Process (Request passedData)
-		{
-
-			// ProcessRequest ((dynamic)passedData);
-
-			// If Reading, check that it is not already in the cache
-			// if it is, add to the ResultSet, if not fetch from file
-			// set latch
-
-			// If Updating, read the rows and update the values in the file
-
-			// If deleted the deleted flag in the file ill be set
-			// These are no longer to be considered existent, but will remain 
-			// in the file to be overriden
-
-			// If creating, locate first deleted row, and insert the new row at that location
-			// Otherwise add the new row to the end of the row
-			// Allocate 120% of its current size when it becomes full
-
-			// Add a compress method later on
-
-			// throw new NotImplementedException ();
-		}
-
-        // Must Save... Row Id -> Location
-        //              Locations Free
-        //              Id of the next row
-        //              Active rows would also be cool
         public void ConfigurationWriter(StreamWriter sw)
         {
             sw.WriteLine(_idOfNextRow);
@@ -363,7 +587,9 @@ namespace DatabaseManagementSystem
             // RowId:Location In File, 
             foreach (KeyValuePair<UInt64, UInt64> entry in _rowLocationInFile)
                 sb.Append($"{entry.Key}:{entry.Value},");
-            sb.Length--; // Removes the tailing comma
+
+            if (sb.Length > 0) // Removes the trailing comma
+                sb.Length--;
 
             sw.WriteLine(sb.ToString());
             sb.Clear();
@@ -372,7 +598,8 @@ namespace DatabaseManagementSystem
             // Print Free spaces in file
             foreach (UInt64 entry in _freeFilePositions)
                 sb.Append($"{entry},");
-            sb.Length--; // Removes the trailing comma
+            if (sb.Length > 0) // Removes the trailing comma
+                sb.Length--;
 
             sw.WriteLine(sb.ToString());
             sb.Clear();
@@ -392,7 +619,11 @@ namespace DatabaseManagementSystem
             {
                 string[] idFileLocationPair = id.Split(':');
 
-                _rowCache.Add(UInt64.Parse(idFileLocationPair[0]), null);
+                _rowCache.Add(
+                    UInt64.Parse(idFileLocationPair[0]),  
+                    new WrRow(UInt64.Parse(idFileLocationPair[0]))
+                );
+
                 _rowLocationInFile.Add(UInt64.Parse(idFileLocationPair[0]), UInt64.Parse(idFileLocationPair[1]));
             }
 
@@ -405,16 +636,30 @@ namespace DatabaseManagementSystem
             }
         }
 
-        public void PrintKeyValue()
+        //---------------------------------------------------------------------
+        //          : Console Commands
+        //---------------------------------------------------------------------
+        public void PrintKeyValue(bool fetch = true)
 		{
 			Console.WriteLine("\n-------------------------");
 			Console.WriteLine("----- Row Cache ----------");
 			Console.WriteLine("--------------------------");
-            foreach (KeyValuePair<UInt64, Row> entry in _rowCache)
+            foreach (KeyValuePair<UInt64, WrRow> entry in _rowCache)
             {
-                if (entry.Value != null)
+                Row cachedRow;
+
+                if (!fetch)
                 {
-                    Console.WriteLine("(Row ID: {0}, Row {1})", entry.Key, entry.Value);
+                    cachedRow = entry.Value.CacheValue();
+                }
+                else
+                {
+                    cachedRow = entry.Value.GetRow(); // The RowCache must be filled with WrRows
+                }
+
+                if (cachedRow != null)
+                {
+                    Console.WriteLine("(Row ID: {0}, Row {1})", entry.Key, cachedRow);
                 }
                 else
                 {
@@ -444,7 +689,7 @@ namespace DatabaseManagementSystem
                 }
                 else
                 {
-                    Console.WriteLine(tempRow);
+                    Console.WriteLine(tempRow.FileString());
                 }
 
                 ++i;
@@ -479,20 +724,38 @@ namespace DatabaseManagementSystem
             sb.AppendLine($"Active rows:\t{_noActiveRows}");
             sb.AppendLine($"Id of Next Row:\t{_idOfNextRow}");
             sb.AppendLine($"Database cap:\t{_currentDatabaseCapacity} rows");
+            sb.AppendLine($"Accesses: {WrRow.acceses}, Fetches: {WrRow.fetchCount}, Hits: {WrRow.hits}.");
+
+            if (WrRow.acceses != 0)
+                sb.AppendLine($"{(WrRow.hits/WrRow.acceses)*100}% Hit Rate");
+            else
+                sb.AppendLine("No row accesses yet!");
 
             return sb.ToString();
         }
 
-        public UInt64 IdOfNextRow
-        {
-            get { return _idOfNextRow; }
-            set { _idOfNextRow = value; }
-        }
 
+        //---------------------------------------------------------------------
+        //          : Getters and Setters
+        //---------------------------------------------------------------------
         public string FileName
         {
             get { return _fileName; }
         }
+
+        public Dictionary<UInt64, UInt64> RowLocationInFile
+        {
+            get { return _rowLocationInFile; }
+        }
+
+        public BinaryReader BW
+        {
+            get
+            {
+                return _binaryReader;
+            }
+        }
+
 
         public static FileManager Instance
 		{
@@ -505,5 +768,169 @@ namespace DatabaseManagementSystem
 			}
 		}
 	}
-}
 
+    public static class RPEL
+    {
+        public static void FMREPL()
+        {
+            Dictionary<UInt64, WrRow> rowCache = Table._rowCache;
+
+            while (true)
+            {
+                Console.WriteLine("save, random <no>, statistics, save, kv <y/n>, file, rl, delete <no.>, cache <f/e>, urandom <no.>");
+                Console.WriteLine("get <no.>");
+                Console.Write("~~> ");
+
+                string inputString = Console.ReadLine();
+
+                if (String.IsNullOrEmpty(inputString))
+                {
+                    Console.WriteLine("Invalid Input");
+                    continue;
+                }
+
+                string[] parsedInput = inputString.Split(' ');
+                string command = parsedInput[0];
+
+
+                switch (command)
+                {
+                    case "get":
+                        {
+                            try
+                            {
+                                Row aRow = FileManager.Instance.GetRowByIndex(UInt64.Parse(parsedInput[1]));
+                                Console.WriteLine($"Got: {aRow}");
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Not a valid numnber");
+                            }
+                            break;
+                        }
+
+                    case "del":
+                        {
+                            try
+                            {
+                                Row deleted = FileManager.Instance.DeleteRowByIndex(UInt64.Parse(parsedInput[1]));
+                                if (deleted == null)
+                                {
+                                    Console.WriteLine("Deleted the row");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unable to delete the row");
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Not a valid numnber");
+                            }
+                            break;
+                        }
+
+                    case "random":
+                        {
+                            UInt64 noToInsert = 0;
+                            try
+                            {
+                                noToInsert = UInt64.Parse(parsedInput[1]);
+                            }
+                            catch (Exception)
+                            {
+                                Console.WriteLine("random <number of random records>");
+                                break;
+                            }
+
+                            for (UInt64 i = 0; i < noToInsert; ++i)
+                                FileManager.Instance.CreateRandomRow();
+                            break;
+                        }
+
+                    case "statistics":
+                        {
+                            Console.WriteLine(FileManager.Instance.Statistics());
+                            break;
+                        }
+
+                    case "save":
+                        {
+                            FileManager.Instance.Save();
+
+                            Environment.Exit(0);
+                            break;
+                        }
+
+                    case "kv":
+                        {
+                            // F does not fetch from file
+                            if (parsedInput.Length > 1 && parsedInput[1] == "n")
+                                FileManager.Instance.PrintKeyValue(false);
+                            else
+                                FileManager.Instance.PrintKeyValue(true);
+                            break;
+                        }
+
+                    case "file":
+                        {
+                            FileManager.Instance.PrintFileContents();
+                            break;
+                        }
+
+                    case "rl":
+                        {
+                            FileManager.Instance.PrintRowLocationsInFile();
+                            break;
+                        }
+
+                    case "cache":
+                        {
+                            if (parsedInput[1] == "f")
+                                // From the file
+                                FileManager.Instance.FillCache(true);
+                            else if (parsedInput[1] == "s")
+                                // From the File Offsets
+                                FileManager.Instance.FillCache(false);
+                            else
+                                FileManager.Instance.EmptyCache();
+                            break;
+                        }
+
+                    case "urandom":
+                        {
+                            FileManager.Instance.UpdateRandomRow(UInt64.Parse(parsedInput[1]));
+                            break;
+                        }
+
+                    case "delete":
+                        {
+                            UInt64 noToRemove = 0;
+                            try
+                            {
+                                noToRemove = UInt64.Parse(parsedInput[1]);
+                            }
+                            catch (Exception)
+                            {
+                                Console.WriteLine("delete <number of records to delete records>");
+                                break;
+                            }
+
+                            for (UInt64 i = 0; i < noToRemove; ++i)
+                                FileManager.Instance.DeleteRandomRows();
+                            break;
+                        }
+
+                    default:
+                        {
+                            Console.WriteLine("Invalid Input");
+                            break;
+                        }
+                }
+
+                Console.WriteLine();
+            }
+        }
+    }
+
+}

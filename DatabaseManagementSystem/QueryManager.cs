@@ -8,142 +8,169 @@ using System.Collections.Generic;
 
 using System.Text;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace DatabaseManagementSystem
 {
+    public static class RequestBuilder
+    {
+        public static Request BuildRequest(string inputString)
+        {
+            string[] commandDataSeperate = inputString.Split(',');
+            string command;
+            string data;
 
-	public interface IRequest {
-		void Execute ();
-	}
+            if (commandDataSeperate.Length < 2)
+                return null;
 
-	public class Request : IRequest
-	{
-		private static Request invalidRequest = null; 	// Signifies the request is not yet valid
-		public ResultSet ResultSet { get; set; }
+            command = commandDataSeperate[0];
+            data = commandDataSeperate[1];
 
+            if (String.IsNullOrWhiteSpace(command) || String.IsNullOrWhiteSpace(command))
+                return null;
 
-		public Request(UInt64 randomRowsToMake)
-		{
-			ResultSet = new ResultSet (new List<Row> ((int)randomRowsToMake));
-		}
-			
-		public virtual void Execute(){}
+            Request returnRequest = new Request();
+            ResultSet resultSet = new ResultSet();
 
-		private Request() {}
-		public static Request InvalidRequest
-		{
-			get 
-			{
-				if (invalidRequest == null)
-					invalidRequest = new Request ();
-
-				return invalidRequest;
-			}
-		}
-	}
+            QueryDetails queryDetails = null;
+            Row[] rowsToOperateOn = null;
 
 
+            switch (command)
+            {
+                // 1-10
+                case "s":
+                {
+                    string[] startEndSplit = data.Split('-');
+                    UInt64 startRange = 0;
+                    UInt64 endRange = 0;
+
+                    if ((startEndSplit.Length < 2) || String.IsNullOrWhiteSpace(startEndSplit[0]) || String.IsNullOrWhiteSpace(startEndSplit[1]))
+                        return null;
+
+                    try
+                    {
+                        startRange = UInt64.Parse(startEndSplit[0]);
+                        endRange = UInt64.Parse(startEndSplit[1]);
+                    }
+                    catch (Exception)
+                    {
+                        return null;
+                    }
+
+                    if (startRange > endRange)
+                        return null;
+
+                    rowsToOperateOn = new Row[(endRange - startRange) + 1];
+
+                    for (UInt64 i = 0; i < (UInt64)rowsToOperateOn.Length; ++i)
+                    {
+                        rowsToOperateOn[i] = new Row(i);
+                    }
+
+                    queryDetails = new QueryDetails(RequestType.Read, rowsToOperateOn);
+                    break;
+                }
+                
+                // 10
+                case "r":
+                {
+                    UInt64 amountOfRandomData;
+                    try
+                    {
+                        amountOfRandomData = UInt64.Parse(data);
+                    }
+                    catch (Exception)
+                    {
+                        return null;
+                    }
+
+                    rowsToOperateOn = new Row[amountOfRandomData];
+                    queryDetails = new QueryDetails(RequestType.Random, rowsToOperateOn);
+                    break;
+                }
+                
+                // 42:data
+                case "u":
+                {
+                    string[] rowIdUpdateSplit = data.Split(':');
+                    UInt64 rowId;
+                    string updatedData = "";
+
+                    if ((rowIdUpdateSplit.Length < 2) || String.IsNullOrWhiteSpace(rowIdUpdateSplit[0]))
+                        return null;
+
+                    updatedData = rowIdUpdateSplit[1];
+
+                    // Get the rowID
+                    try
+                    {
+                        rowId = UInt64.Parse(rowIdUpdateSplit[0]);
+                    }
+                    catch (Exception)
+                    {
+                        return null;
+                    }
+
+                    
+                    rowsToOperateOn = new Row[]
+                    {
+                        new Row(rowId, updatedData),
+                    };
+
+                    queryDetails = new QueryDetails(RequestType.Update, rowsToOperateOn);
+                    break;
+                }
+                
+                // 42
+                case "d":
+                {
+                    UInt64 recordToRemove;
+                    try
+                    {
+                        recordToRemove = UInt64.Parse(data);
+                    }
+                    catch (Exception)
+                    {
+                        return null;
+                    }
+
+                    rowsToOperateOn = new Row[]
+                    {
+                        new Row(recordToRemove),
+                    };
+
+                    queryDetails = new QueryDetails(RequestType.Delete, rowsToOperateOn);
+                    break;
+                }
+                
+                // data
+                case "c":
+                {
+                    rowsToOperateOn = new Row[]
+                    {
+                        new Row(0, data), 
+                    };
+                    queryDetails = new QueryDetails(RequestType.Write, rowsToOperateOn);
+                    break;
+                }
+
+                default:
+                {
+                    return null;
+                }
+            }
+
+            returnRequest.SetQuery(queryDetails);
+            returnRequest.SetResultSet(resultSet);
+
+            return returnRequest;
+        }
 
 
-	/*public class CreateRequest : Request 
-	{
-
-	}
-
-	public class DeleteRequest : Request 
-	{
-
-	}
-
-	public class UpdateRequest : Request
-	{
-
-	}*/ 
-
-	// Just creates a bunch of nulled rows, will be filled in and then committed to the DB
-	public class RandomRequest : Request
-	{
-		public UInt64 randomRowsToMake;
-
-		public RandomRequest(UInt64 randomRowsToMake) : base(randomRowsToMake)
-		{
-			this.randomRowsToMake = randomRowsToMake;
-			base.ResultSet._rowObjectsCompleted = new List<Row> ();
-		}
-
-		public override void Execute(){}
-
-
-		public UInt64 RandomRowsToMake {
-			get {
-				return randomRowsToMake;
-			}
-		}
-	}
-
-	public class SelectRequest : Request
-	{
-		public UInt64 startId;
-		public UInt64 endId;
-
-		public SelectRequest(UInt64 start, UInt64 end) : base(end - start)
-		{
-			this.startId = start;
-			this.endId = end;
-
-			//base.ResulltSet._rowObjectsCompleted = new List<Row> ();
-		}
-
-		public override void Execute(){}
-	}
-
-
-	public static class RequestFactory 
-	{
-
-		private static RandomRequest createRandomRequest(string queryString)
-		{
-			Console.WriteLine ("Generating {0} rows of random data!", queryString);
-
-			return new RandomRequest (Convert.ToUInt64 (queryString));
-		}
-
-		private static SelectRequest createSelectRequest(string start, string end)
-		{
-			Console.WriteLine ("Selecting rows between [{0} - {1}]", start, end);
-
-			return new SelectRequest (Convert.ToUInt64 (start), Convert.ToUInt64(end));
-		} 
-
-
-			
-
-		public static Request messageToRequest(string message)
-		{
-			Request temp = null;
-
-			List<string> words = message.Split (',').ToList();
-
-
-			string queryType = words [0];
-			words.RemoveAt (0);
-
-			switch (queryType) {
-			case "s":
-				return createSelectRequest (words [0], words [1]);
-			case "c":
-				break;
-			case "u":
-				return null; //createUpdateRequest (words[0]);
-			case "d":
-				break;
-			case "r":
-				return createRandomRequest (words[0]);
-			}
-
-			return temp;
-		}
-	}
+    }
 
 	public class QueryManager : ChannelActiveObject<Connection>
 	{
@@ -152,29 +179,72 @@ namespace DatabaseManagementSystem
 		TableManager _myTable;
 
 
-		public QueryManager()
+		public QueryManager(string fileName = "database.db", bool newDatabase = true)
 		{
-			_myTable = new TableManager ();
-
+			_myTable = new TableManager (fileName, newDatabase);
 
 			_incomingConnections = new ConnectionManager (base._inputChannel);
-			_incomingConnections.Start ();
-		}
+            _incomingConnections.Start();
+        }
+
+	    public void UserProcess()
+	    {
+	        while (true)
+	        {
+                Console.Write("Enter a Request \n~> ");
+	            Request request = null;
+
+	            while (request == null)
+	            {
+	                request = RequestBuilder.BuildRequest(Console.ReadLine());
+	            }
+
+	            Console.WriteLine($"QM: {request}");
+
+	            _myTable.Accept(request);
+
+	            ResultSet MyRows = request.GetResultSet();
+
+                foreach (Row row in MyRows.Rows) // Automatically blocks
+	            {
+	                Console.WriteLine($"Got {row}");
+	            }
+	        }
+	    }
 
 
+	    protected override void Process(Connection connectionMessage)
+	    {
+	        ConnectionWithMessage aMessageCon = (ConnectionWithMessage) connectionMessage;
 
+            Console.WriteLine($"Request: {aMessageCon.message}");
 
-		protected override void Process (Connection connectionMessage)
-		{
-			ConnectionWithMessage aMessageCon = (ConnectionWithMessage)connectionMessage;
+            Request request = RequestBuilder.BuildRequest(aMessageCon.message);
 
+	        StringBuilder sb = new StringBuilder();
 
-			// _myTable.execute()
+	        if (request != null) { 
+	            _myTable.Accept(request);
 
-			connectionMessage.writer.WriteLine (aMessageCon.message);
+	            ResultSet MyRows = request.GetResultSet();
 
-			Console.WriteLine (aMessageCon.message);
-		}
+                sb.AppendLine("---------------------------------------------");
+                foreach (Row row in MyRows.Rows) // Automatically blocks
+	            {
+	                sb.AppendLine($"{row}");
+	            }
+                sb.AppendLine("---------------------------------------------");
+            }
+            else
+	        {
+	            sb.AppendLine("Invalid input!");
+	        }
+
+            sb.Append("~> ");
+
+            connectionMessage.writer.Write (sb.ToString());
+	        connectionMessage.writer.Flush();
+	    }
 
 	}
 }
