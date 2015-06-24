@@ -76,16 +76,16 @@ namespace DatabaseManagementSystem
 
         public void Accept(Request aRequest)
 	    {
-            Console.WriteLine($"TB: {aRequest}");
+			Console.WriteLine("TB: {0}", aRequest);
 
             if (aRequest.RequestType == RequestType.Read)
             {
                 // They were all in the cache
-                if (HandleSelect(aRequest))
-                {
-                    aRequest.Unlock(OperationStatus.Completed);
-                    return;
-                }
+                // if (HandleSelect(aRequest))
+                // {
+                //    aRequest.Unlock(OperationStatus.Completed);
+                //    return;
+                // }
             }
 
             _fileManagerChannel.Put(aRequest);

@@ -67,7 +67,7 @@ namespace DatabaseManagementSystem
 
                     for (UInt64 i = 0; i < (UInt64)rowsToOperateOn.Length; ++i)
                     {
-                        rowsToOperateOn[i] = new Row(i);
+						rowsToOperateOn[i] = new Row(i + startRange);
                     }
 
                     queryDetails = new QueryDetails(RequestType.Read, rowsToOperateOn);
@@ -199,7 +199,7 @@ namespace DatabaseManagementSystem
 	                request = RequestBuilder.BuildRequest(Console.ReadLine());
 	            }
 
-	            Console.WriteLine($"QM: {request}");
+				Console.WriteLine("QM: {0}", request);
 
 	            _myTable.Accept(request);
 
@@ -207,7 +207,7 @@ namespace DatabaseManagementSystem
 
                 foreach (Row row in MyRows.Rows) // Automatically blocks
 	            {
-	                Console.WriteLine($"Got {row}");
+					Console.WriteLine("Got {0}", row);
 	            }
 	        }
 	    }
@@ -217,7 +217,7 @@ namespace DatabaseManagementSystem
 	    {
 	        ConnectionWithMessage aMessageCon = (ConnectionWithMessage) connectionMessage;
 
-            Console.WriteLine($"Request: {aMessageCon.message}");
+			Console.WriteLine("Request: {0}", aMessageCon.message);
 
             Request request = RequestBuilder.BuildRequest(aMessageCon.message);
 
@@ -231,7 +231,7 @@ namespace DatabaseManagementSystem
                 sb.AppendLine("---------------------------------------------");
                 foreach (Row row in MyRows.Rows) // Automatically blocks
 	            {
-	                sb.AppendLine($"{row}");
+					sb.AppendLine(String.Format("{0}", row));
 	            }
                 sb.AppendLine("---------------------------------------------");
             }

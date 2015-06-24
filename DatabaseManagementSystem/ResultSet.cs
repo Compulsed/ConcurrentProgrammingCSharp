@@ -102,7 +102,7 @@ namespace DatabaseManagementSystem
         // -- For special
         public override string ToString()
         {
-            return $"Is a {_queryDetails.RequestType.ToString()} and has {_queryDetails._NumberOfRowsLeft} to complete";
+			return String.Format("Is a {0} and has {1} to complete", _queryDetails.RequestType.ToString(), _queryDetails._NumberOfRowsLeft);
         }
     }
 

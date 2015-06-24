@@ -229,7 +229,7 @@ namespace DatabaseManagementSystem
 
         protected override void Process(Request aRequest)
         {
-            Console.WriteLine($"FM: {aRequest}");
+			Console.WriteLine("FM: {0}", aRequest);
 
             switch (aRequest.RequestType)
             {
@@ -265,7 +265,7 @@ namespace DatabaseManagementSystem
 
                 default:
                 {
-                    Console.WriteLine($"FM - Unable to process {aRequest} at the moment");
+					Console.WriteLine("FM - Unable to process {0} at the moment", aRequest);
                     break;
                 }
                 
@@ -586,7 +586,7 @@ namespace DatabaseManagementSystem
 
             // RowId:Location In File, 
             foreach (KeyValuePair<UInt64, UInt64> entry in _rowLocationInFile)
-                sb.Append($"{entry.Key}:{entry.Value},");
+				sb.Append(String.Format("{0}:{1},", entry.Key, entry.Value));
 
             if (sb.Length > 0) // Removes the trailing comma
                 sb.Length--;
@@ -597,7 +597,7 @@ namespace DatabaseManagementSystem
 
             // Print Free spaces in file
             foreach (UInt64 entry in _freeFilePositions)
-                sb.Append($"{entry},");
+				sb.Append(String.Format("{0},", entry));
             if (sb.Length > 0) // Removes the trailing comma
                 sb.Length--;
 
@@ -708,7 +708,7 @@ namespace DatabaseManagementSystem
 
             Console.WriteLine("Free Spaces in file: ");
             foreach(UInt64 freeOffset in _freeFilePositions)
-                Console.Write($"{freeOffset} ");
+				Console.Write("{0} ", freeOffset);
             Console.WriteLine();
 
             Console.WriteLine("-----------------------");
@@ -719,15 +719,15 @@ namespace DatabaseManagementSystem
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine("-- Statistics --");
-            sb.AppendLine($"Name of file:\t{_fileName}");
-            sb.AppendLine($"Active rows:\t{_noActiveRows}");
-            sb.AppendLine($"Id of Next Row:\t{_idOfNextRow}");
-            sb.AppendLine($"Database cap:\t{_currentDatabaseCapacity} rows");
-            sb.AppendLine($"Accesses: {WrRow.acceses}, Fetches: {WrRow.fetchCount}, Hits: {WrRow.hits}.");
+			sb.AppendLine (String.Format("-- Statistics --"));
+			sb.AppendLine (String.Format("Name of file:\t{0}", _fileName));
+			sb.AppendLine (String.Format ("Active rows:\t{0}", _noActiveRows));
+			sb.AppendLine (String.Format("Id of Next Row:\t{0}", _idOfNextRow));
+			sb.AppendLine (String.Format ("Database cap:\t{0} rows", _currentDatabaseCapacity));
+			sb.AppendLine (String.Format ("Accesses: {0}, Fetches: {1}, Hits: {2}.", WrRow.acceses, WrRow.fetchCount, WrRow.hits));
 
             if (WrRow.acceses != 0)
-                sb.AppendLine($"{(WrRow.hits/WrRow.acceses)*100}% Hit Rate");
+				sb.AppendLine(String.Format("{0}% Hit Rate", (WrRow.hits/WrRow.acceses)*100));
             else
                 sb.AppendLine("No row accesses yet!");
 
@@ -800,7 +800,7 @@ namespace DatabaseManagementSystem
                             try
                             {
                                 Row aRow = FileManager.Instance.GetRowByIndex(UInt64.Parse(parsedInput[1]));
-                                Console.WriteLine($"Got: {aRow}");
+								Console.WriteLine("Got: {0}", aRow);
                             }
                             catch (Exception e)
                             {

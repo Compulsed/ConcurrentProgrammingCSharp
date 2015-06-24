@@ -15,7 +15,7 @@ namespace DatabaseManagementSystem
 
 		public void Accept(Request aRequest)
 		{
-            Console.WriteLine($"TM: {aRequest}");
+			Console.WriteLine("TM: {0}", aRequest);
 		    _mainTable.Accept(aRequest);
 		}
     }
